@@ -2,8 +2,10 @@ import axios from "axios";
 
 const API_BASE_URL =
   import.meta.env.MODE === "production"
-    ? import.meta.env.VITE_API_BASE_URL_PROD
-    : import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+    ? (import.meta.env.VITE_API_BASE_URL_PROD || 
+       import.meta.env.VITE_API_BASE_URL || 
+       "https://motor-foundry-backend.vercel.app/api")
+    : (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api");
 
 const api = axios.create({
   baseURL: API_BASE_URL,
