@@ -1,0 +1,348 @@
+/* ===========================
+   DASHBOARD V2 - Compact Layout
+   Single Viewport, No Scrolling
+   =========================== */
+
+.dashboard-v2 {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  background: #1a1a2e;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+}
+
+/* Header */
+.dashboard-header {
+  background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+  border-bottom: 1px solid #333;
+  padding: 8px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  min-height: 50px;
+  box-sizing: border-box;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.header-left h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.header-left p {
+  margin: 0;
+  font-size: 11px;
+  color: #888;
+}
+
+.header-right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 11px;
+}
+
+.status-online {
+  color: #00d4ff;
+  font-weight: 600;
+}
+
+.motor-id {
+  color: #888;
+  font-size: 10px;
+}
+
+/* Main Grid Layout */
+.dashboard-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 110px 1fr 240px;
+  grid-template-rows: 1fr 1fr;
+  gap: 8px;
+  padding: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* ===== GAUGES PANEL (Left Column) ===== */
+.gauges-panel {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  overflow: hidden;
+  padding: 0;
+  background: transparent;
+}
+
+.circular-gauge {
+  background: #0f3460;
+  border: 1px solid #333;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
+}
+
+.gauge-label {
+  font-size: 9px;
+  color: #888;
+  margin-top: 2px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+/* ===== CHART PANEL (Center, Top) ===== */
+.chart-panel {
+  grid-column: 2;
+  grid-row: 1;
+  background: #0f3460;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.controls-row {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.select-control,
+.date-control {
+  background: #16213e;
+  border: 1px solid #333;
+  color: #fff;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.select-control {
+  flex: 1;
+  min-width: 80px;
+}
+
+.date-control {
+  flex: 1;
+  min-width: 100px;
+}
+
+.select-control:hover,
+.date-control:hover {
+  background: #1a2d4d;
+  border-color: #555;
+}
+
+.line-chart-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.chart-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  color: #888;
+  margin-bottom: 4px;
+  flex-shrink: 0;
+}
+
+.export-btn {
+  background: #16213e;
+  border: 1px solid #444;
+  color: #00d4ff;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 9px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.export-btn:hover {
+  background: #1a2d4d;
+  border-color: #00d4ff;
+  color: #fff;
+}
+
+.line-chart {
+  flex: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #666;
+  font-size: 11px;
+}
+
+/* ===== BAR PANEL (Bottom Right) ===== */
+.bar-panel {
+  grid-column: 2 / 4;
+  grid-row: 2;
+  background: #0f3460;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.bar-chart-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.time-select {
+  background: #16213e;
+  border: 1px solid #333;
+  color: #fff;
+  padding: 3px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  cursor: pointer;
+  flex: 1;
+  max-width: 120px;
+}
+
+.date-input {
+  background: #16213e;
+  border: 1px solid #333;
+  color: #fff;
+  padding: 3px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  cursor: pointer;
+  flex: 1;
+  max-width: 140px;
+}
+
+.bar-chart {
+  flex: 1;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  font-size: 9px;
+  color: #888;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.chart-legend span {
+  white-space: nowrap;
+}
+
+/* ===== RIGHT PANEL (Currently empty, can add alerts/info) ===== */
+/* Reserved for future use or alerts */
+
+/* ===========================
+   Responsive Adjustments
+   =========================== */
+
+@media (max-width: 1600px) {
+  .dashboard-grid {
+    grid-template-columns: 100px 1fr 200px;
+    gap: 6px;
+    padding: 6px;
+  }
+}
+
+@media (max-width: 1400px) {
+  .dashboard-grid {
+    grid-template-columns: 90px 1fr 180px;
+    gap: 5px;
+    padding: 5px;
+  }
+
+  .circular-gauge {
+    padding: 3px;
+  }
+}
+
+/* ===========================
+   Scrollbar Styling (Hidden)
+   =========================== */
+
+.dashboard-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.gauges-panel::-webkit-scrollbar {
+  display: none;
+}
+
+.chart-panel::-webkit-scrollbar {
+  display: none;
+}
+
+/* ===========================
+   Text Overflow Prevention
+   =========================== */
+
+.dashboard-v2 * {
+  box-sizing: border-box;
+}
+
+/* Animation for loading state */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #888;
+  font-size: 12px;
+  animation: spin 2s linear infinite;
+}

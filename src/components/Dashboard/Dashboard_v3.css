@@ -1,0 +1,304 @@
+/* Dashboard V3 - Compact Single Viewport Layout */
+
+.dashboard-v3 {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #0f172a;
+  color: #e0e7ff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+}
+
+/* Header */
+.dashboard-v3 .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-bottom: 1px solid #334155;
+  flex-shrink: 0;
+}
+
+.dashboard-v3 .header h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #e0e7ff;
+}
+
+.dashboard-v3 .header p {
+  margin: 2px 0 0 0;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+/* Main Content Grid - 3 columns */
+.dashboard-v3 .main-content {
+  display: grid;
+  grid-template-columns: 120px 1fr 280px;
+  gap: 8px;
+  padding: 8px;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* LEFT COLUMN: Speedometers (4 compact gauges vertically) */
+.dashboard-v3 .gauges-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.dashboard-v3 .gauges-section::-webkit-scrollbar {
+  width: 4px;
+}
+
+.dashboard-v3 .gauges-section::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dashboard-v3 .gauges-section::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 2px;
+}
+
+.speedometer-card {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 6px;
+  flex-shrink: 0;
+  min-height: 115px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.speedometer-card h4 {
+  margin: 0 0 4px 0;
+  font-size: 10px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.speedometer-svg {
+  width: 100%;
+  height: 90px;
+  flex: 1;
+}
+
+/* CENTER COLUMN: Historical Chart */
+.dashboard-v3 .chart-wrapper {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dashboard-v3 .chart-section {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.dashboard-v3 .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  flex-shrink: 0;
+}
+
+.dashboard-v3 .section-header h2,
+.dashboard-v3 .section-header h3 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #e0e7ff;
+}
+
+.dashboard-v3 .controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.dashboard-v3 .date-input,
+.dashboard-v3 .date-input-small,
+.dashboard-v3 .month-input-small {
+  padding: 4px 6px;
+  font-size: 9px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 3px;
+  color: #e0e7ff;
+  cursor: pointer;
+}
+
+.dashboard-v3 .date-input-small,
+.dashboard-v3 .month-input-small {
+  padding: 3px 4px;
+  font-size: 8px;
+  width: 95px;
+}
+
+.dashboard-v3 .export-btn {
+  padding: 4px 8px;
+  font-size: 9px;
+  background: #0369a1;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.dashboard-v3 .export-btn:hover {
+  background: #0284c7;
+}
+
+.dashboard-v3 .chart {
+  flex: 1;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.5) 0%, rgba(30, 41, 59, 0.5) 100%);
+  border: 1px solid #334155;
+  border-radius: 4px;
+  overflow: hidden;
+  min-height: 200px;
+}
+
+.dashboard-v3 .chart-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #64748b;
+  font-size: 12px;
+}
+
+/* RIGHT COLUMN: Weekly & Monthly Average Charts */
+.dashboard-v3 .avg-charts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.dashboard-v3 .section {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.dashboard-v3 .section .section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 4px;
+}
+
+.dashboard-v3 .section .section-header h3 {
+  font-size: 11px;
+}
+
+.dashboard-v3 .section .section-header input {
+  padding: 2px 4px;
+  font-size: 8px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 2px;
+  color: #e0e7ff;
+  width: 100%;
+}
+
+.dashboard-v3 .avg-chart {
+  flex: 1;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.5) 0%, rgba(30, 41, 59, 0.5) 100%);
+  border: 1px solid #334155;
+  border-radius: 4px;
+  overflow: hidden;
+  min-height: 150px;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 1600px) {
+  .dashboard-v3 .main-content {
+    grid-template-columns: 100px 1fr 260px;
+  }
+
+  .speedometer-card {
+    min-height: 100px;
+  }
+
+  .speedometer-svg {
+    height: 75px;
+  }
+}
+
+@media (max-width: 1400px) {
+  .dashboard-v3 .main-content {
+    grid-template-columns: 90px 1fr 240px;
+  }
+
+  .dashboard-v3 .header h1 {
+    font-size: 16px;
+  }
+
+  .speedometer-card h4 {
+    font-size: 9px;
+  }
+
+  .dashboard-v3 .section-header h2,
+  .dashboard-v3 .section-header h3 {
+    font-size: 11px;
+  }
+}
+
+/* Scrollbar styling */
+.dashboard-v3 ::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.dashboard-v3 ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dashboard-v3 ::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 2px;
+}
+
+.dashboard-v3 ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Animation for values */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.dashboard-v3 .gauge-value {
+  animation: pulse 2s ease-in-out infinite;
+}

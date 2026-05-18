@@ -1,0 +1,24 @@
+{
+  "name": "motor-monitoring-dashboard",
+  "version": "1.0.0",
+  "description": "Real-time motor monitoring dashboard for predictive maintenance",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext js,jsx"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "axios": "^1.4.0",
+    "recharts": "^2.10.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^3.1.0",
+    "vite": "^4.3.9",
+    "eslint": "^8.41.0",
+    "eslint-plugin-react": "^7.32.2"
+  }
+}

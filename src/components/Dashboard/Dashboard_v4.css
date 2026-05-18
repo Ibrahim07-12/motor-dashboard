@@ -1,0 +1,349 @@
+.dashboard-v4 {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #f8fafc;
+  padding: 12px;
+  gap: 12px;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Header */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+  border-radius: 8px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.dashboard-header p {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.header-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 11px;
+  gap: 4px;
+}
+
+.header-status span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Real-time Gauges Section */
+.gauges-section {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  flex-shrink: 0;
+  height: auto;
+}
+
+.gauge-container {
+  background: white;
+  border-radius: 8px;
+  padding: 3px 4px 2px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.gauge-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: #4b5563;
+  text-align: center;
+}
+
+.gauge-dial {
+  width: 100%;
+  max-width: 132px;
+  height: 78px;
+  overflow: visible;
+}
+
+.gauge-min-label,
+.gauge-max-label {
+  fill: #94a3b8;
+  font-size: 8px;
+  font-weight: 600;
+}
+
+.gauge-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e293b;
+  text-align: center;
+}
+
+.gauge-value span {
+  font-size: 8px;
+  font-weight: 500;
+  color: #64748b;
+  margin-left: 2px;
+}
+
+/* Chart Section */
+.chart-section {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  height: 300px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  padding: 10px;
+  gap: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-bottom: 2px;
+  z-index: 5;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  flex-shrink: 0;
+}
+
+.controls {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
+  flex-wrap: nowrap;
+  z-index: 10;
+  position: relative;
+}
+
+.controls label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.controls input[type="date"],
+.controls input[type="month"],
+.controls select {
+  padding: 6px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 12px;
+  background: white;
+  color: #1e293b;
+  cursor: pointer;
+  appearance: none;
+  outline: none;
+  min-width: 80px;
+}
+
+.controls select {
+  padding-right: 20px;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path fill="%231e293b" d="M1 1l5 5 5-5"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 12px 8px;
+  min-width: 85px;
+}
+
+.controls select:focus {
+  border: 1px solid #3b82f6;
+}
+
+.btn-export {
+  padding: 6px 12px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-export:hover {
+  background: #2563eb;
+}
+
+/* Average Section */
+.average-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  padding: 8px;
+  gap: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  min-height: 0;
+}
+
+/* Bar Charts Grid - Horizontal 1x4 layout */
+.bar-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  flex: 1;
+  overflow: hidden;
+  align-content: start;
+  align-items: stretch;
+}
+
+.bar-chart-container {
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  padding: 0px;
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+  min-height: 0;
+  height: 160px;
+}
+
+.bar-chart-container h3 {
+  margin: 0;
+  font-size: 9px;
+  font-weight: 600;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.bar-chart-container .recharts-wrapper {
+  width: 100% !important;
+  min-width: 0;
+}
+
+.bar-chart-container .recharts-surface {
+  width: 100% !important;
+}
+
+/* Scrollbar styling untuk bar charts grid */
+.bar-charts-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.bar-charts-grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.bar-charts-grid::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.bar-charts-grid::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Responsive untuk layar lebih kecil */
+@media (max-height: 900px) {
+  .dashboard-v4 {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .gauges-section {
+    gap: 8px;
+  }
+
+  .chart-section {
+    height: 200px;
+    padding: 10px;
+  }
+
+  .gauge-container {
+    padding: 8px;
+    gap: 4px;
+  }
+
+  .bar-chart-container {
+    padding: 8px;
+  }
+
+  .bar-charts-grid {
+    gap: 10px;
+  }
+}
+
+/* Recharts customization */
+.recharts-cartesian-axis-tick text {
+  fill: #9ca3af !important;
+  font-size: 11px !important;
+}
+
+.recharts-legend-wrapper {
+  margin-top: 8px !important;
+}
+
+.recharts-legend-item-text {
+  font-size: 11px !important;
+  color: #64748b !important;
+}
+
+.recharts-tooltip-wrapper {
+  outline: none !important;
+}
+
+.recharts-default-tooltip {
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Overrides: enlarge bar charts and realtime gauge */
+.bar-chart-container {
+  padding: 8px !important;
+  height: 180px !important;
+  overflow: visible !important;
+}
+.bar-chart-container h3 {
+  font-size: 11px !important;
+}
+.bar-chart-container .recharts-wrapper {
+  height: calc(100% - 22px) !important;
+}
+.gauge-dial {
+  max-width: 132px !important;
+  height: 78px !important;
+}
+.gauge-dial path[stroke-dasharray] {
+  transition: stroke-dashoffset 600ms ease, stroke 300ms ease;
+  transform-origin: 60px 66px;
+}
