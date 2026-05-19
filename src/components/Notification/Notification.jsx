@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import "./Notification.css";
 
 /**
- * Notification Component - Red alert notification at top-right
+ * Notification Component - Red alert notification at bottom-right
  * Shows abnormal condition warnings based on sensor thresholds
+ * Blinks: 3s visible, 5s hidden, repeats
  */
 const Notification = ({
   isEnabled = true,
@@ -17,6 +18,16 @@ const Notification = ({
   },
 }) => {
   const [alerts, setAlerts] = useState([]);
+
+  // Display name mapping for motor IDs
+  const getMotorDisplayName = (id) => {
+    const nameMap = {
+      motor_main_shakeout: "Mainshakeout",
+      motor_auxiliary: "Auxiliary",
+      motor_backup: "Backup",
+    };
+    return nameMap[id] || id;
+  };
 
   // Check for abnormal conditions
   useEffect(() => {
@@ -50,15 +61,16 @@ const Notification = ({
     // Generate notification message
     if (abnormalParams.length > 0) {
       let message = "";
+      const motorDisplay = getMotorDisplayName(motorId);
 
       if (abnormalParams.length === 1) {
-        message = `${abnormalParams[0]} Motor ${motorId} melebihi batas aman.`;
+        message = `${abnormalParams[0]} Motor ${motorDisplay} melebihi batas aman.`;
       } else if (abnormalParams.length === 2) {
-        message = `${abnormalParams[0]} dan ${abnormalParams[1]} Motor ${motorId} melebihi batas aman.`;
+        message = `${abnormalParams[0]} dan ${abnormalParams[1]} Motor ${motorDisplay} melebihi batas aman.`;
       } else if (abnormalParams.length === 3) {
-        message = `${abnormalParams[0]}, ${abnormalParams[1]} dan ${abnormalParams[2]} Motor ${motorId} melebihi batas aman.`;
+        message = `${abnormalParams[0]}, ${abnormalParams[1]} dan ${abnormalParams[2]} Motor ${motorDisplay} melebihi batas aman.`;
       } else if (abnormalParams.length === 4) {
-        message = `${abnormalParams[0]}, ${abnormalParams[1]}, ${abnormalParams[2]} dan ${abnormalParams[3]} Motor ${motorId} melebihi batas aman.`;
+        message = `${abnormalParams[0]}, ${abnormalParams[1]}, ${abnormalParams[2]} dan ${abnormalParams[3]} Motor ${motorDisplay} melebihi batas aman.`;
       }
 
       setAlerts([
@@ -81,7 +93,7 @@ const Notification = ({
   return (
     <div className="notifications-container">
       {alerts.map((alert) => (
-        <div key={alert.id} className={`notification notification-${alert.type}`}>
+        <div key={alert.id} className={`notification notification-${alert.type} notification-blink`}>
           <div className="notification-icon">⚠️</div>
           <div className="notification-content">
             <div className="notification-message">{alert.message}</div>

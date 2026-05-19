@@ -1,7 +1,7 @@
-/* Notifications Container - Top Right */
+/* Notifications Container - Bottom Right */
 .notifications-container {
   position: fixed;
-  top: 20px;
+  bottom: 20px;
   right: 20px;
   z-index: 1000;
   display: flex;
@@ -19,8 +19,15 @@
   padding: 12px 16px;
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  animation: slideInRight 0.3s ease-out;
+  animation: slideInUp 0.3s ease-out;
   backdrop-filter: blur(10px);
+}
+
+/* Blinking Effect - 3s visible, 5s hidden */
+.notification-blink {
+  animation: 
+    slideInUp 0.3s ease-out,
+    blinkNotification 8s infinite 0.3s;
 }
 
 /* Warning Type */
@@ -99,15 +106,31 @@
   opacity: 1;
 }
 
-/* Animation: Slide in from right */
-@keyframes slideInRight {
+/* Animation: Slide in from bottom */
+@keyframes slideInUp {
   from {
-    transform: translateX(400px);
+    transform: translateY(400px);
     opacity: 0;
   }
   to {
-    transform: translateX(0);
+    transform: translateY(0);
     opacity: 1;
+  }
+}
+
+/* Animation: Blink - 3s visible, 5s hidden, repeats */
+@keyframes blinkNotification {
+  0% {
+    opacity: 1;
+  }
+  37.5% {
+    opacity: 1;
+  }
+  37.6% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
   }
 }
 
@@ -124,7 +147,7 @@
 /* Responsive - Mobile */
 @media (max-width: 640px) {
   .notifications-container {
-    top: 10px;
+    bottom: 10px;
     right: 10px;
     left: 10px;
     max-width: none;
