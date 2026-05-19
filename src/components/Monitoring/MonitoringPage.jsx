@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../Sidebar/Sidebar";
 import Dashboard from "../Dashboard/Dashboard_v4";
+import Notification from "../Notification/Notification";
 import ThresholdSettings from "../Settings/ThresholdSettings";
 import EmailSettings from "../Settings/EmailSettings";
 import { sensorAPI } from "../../services/api";
@@ -10,6 +11,7 @@ import "./MonitoringPage.css";
  * MonitoringPage - Main Container Component
  * - Sidebar with motor selection + notification toggle
  * - Dashboard with gauges + charts
+ * - Notification alerts for abnormal conditions
  * - Settings modals (Threshold, Email)
  * - Real-time polling every 2 seconds
  */
@@ -23,6 +25,14 @@ const MonitoringPage = ({ user = {}, onLogout = () => {} }) => {
   });
   const [notificationEnabled, setNotificationEnabled] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Thresholds for warning notifications
+  const [thresholds, setThresholds] = useState({
+    temperature: 70, // °C
+    vibration: 25, // m/s²
+    noise: 85, // dB
+    power: 8000, // W (8 kW)
+  });
 
   // Modals state
   const [showThresholdModal, setShowThresholdModal] = useState(false);
@@ -60,10 +70,11 @@ const MonitoringPage = ({ user = {}, onLogout = () => {} }) => {
     // Optionally save to backend: await settingsAPI.updateNotifications({ enabled: !notificationEnabled })
   };
 
-  const handleSaveThresholds = async (thresholds) => {
-    // Optionally save to backend in future
-    console.log("Saving thresholds:", thresholds);
-    // await settingsAPI.updateThresholds(thresholds);
+  const handleSaveThresholds = async (newThresholds) => {
+    // Update thresholds
+    setThresholds(newThresholds);
+    console.log("Saving thresholds:", newThresholds);
+    // await settingsAPI.updateThresholds(newThresholds);
   };
 
   const handleSaveEmails = async (emails) => {
@@ -90,6 +101,14 @@ const MonitoringPage = ({ user = {}, onLogout = () => {} }) => {
         {/* Dashboard */}
         <Dashboard sensorData={sensorData} motorId={motorId} />
       </div>
+
+      {/* Notification Alerts */}
+      <Notification
+        isEnabled={notificationEnabled}
+        sensorData={sensorData}
+        motorId={motorId}
+        thresholds={thresholds}
+      />
 
       {/* Modals */}
       <ThresholdSettings

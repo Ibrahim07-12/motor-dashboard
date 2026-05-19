@@ -2,11 +2,11 @@
 .sidebar {
   width: 200px;
   height: 100vh;
-  background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
   color: white;
   padding: 15px;
   overflow-y: auto;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
   transition: width 0.3s ease, padding 0.3s ease;
   position: fixed;
   left: 0;
@@ -14,6 +14,7 @@
   z-index: 100;
   display: flex;
   flex-direction: column;
+  border-right: 1px solid rgba(148, 163, 184, 0.1);
 }
 
 .sidebar.collapsed {
@@ -27,7 +28,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
   padding-bottom: 12px;
   width: 100%;
 }
@@ -37,15 +38,16 @@
   gap: 6px;
   margin-bottom: 10px;
   padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
   justify-content: center;
 }
 
 .sidebar-title {
   margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: #e2e8f0;
 }
 
 .sidebar.collapsed .sidebar-title {
@@ -53,27 +55,29 @@
 }
 
 .toggle-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  padding: 8px 12px;
-  border-radius: 6px;
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+  padding: 6px 10px;
+  border-radius: 5px;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 500;
   transition: all 0.2s;
-  min-width: 40px;
+  min-width: 36px;
   text-align: center;
 }
 
 .toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(148, 163, 184, 0.15);
+  color: #cbd5e1;
+  border-color: rgba(148, 163, 184, 0.25);
 }
 
 .sidebar.collapsed .toggle-btn {
   padding: 6px 8px;
   min-width: 32px;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 /* Sections Container */
@@ -93,7 +97,7 @@
 .sidebar-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .sidebar.collapsed .sidebar-section {
@@ -103,11 +107,11 @@
 
 .section-title {
   display: block;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.4px;
+  color: #94a3b8;
   margin: 0;
 }
 
@@ -119,7 +123,7 @@
 .notification-toggle {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .sidebar.collapsed .notification-toggle {
@@ -130,15 +134,17 @@
 
 .toggle-switch {
   padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: white;
-  border-radius: 6px;
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  color: #cbd5e1;
+  border-radius: 5px;
   cursor: pointer;
   font-size: 12px;
   font-weight: 600;
   transition: all 0.2s;
   width: 100%;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 .sidebar.collapsed .toggle-switch {
@@ -148,24 +154,30 @@
 }
 
 .toggle-switch.on {
-  background: rgba(46, 204, 113, 0.3);
-  border-color: #2ecc71;
-  color: #2ecc71;
+  background: rgba(34, 197, 94, 0.15);
+  border-color: #22c55e;
+  color: #86efac;
+}
+
+.toggle-switch.on:hover {
+  background: rgba(34, 197, 94, 0.25);
+  border-color: #4ade80;
 }
 
 .toggle-switch.off {
-  background: rgba(231, 76, 60, 0.3);
-  border-color: #e74c3c;
-  color: #e74c3c;
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #ef4444;
+  color: #fca5a5;
 }
 
-.toggle-switch:hover {
-  background: rgba(255, 255, 255, 0.1);
+.toggle-switch.off:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: #f87171;
 }
 
 .toggle-status {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: 10px;
+  color: #64748b;
   text-align: center;
 }
 
@@ -175,13 +187,13 @@
 
 /* Settings Buttons */
 .settings-btn {
-  padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: white;
-  border-radius: 6px;
+  padding: 9px 12px;
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  color: #cbd5e1;
+  border-radius: 5px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   transition: all 0.2s;
   text-align: center;
@@ -194,8 +206,78 @@
 }
 
 .settings-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(148, 163, 184, 0.15);
+  border-color: rgba(148, 163, 184, 0.25);
+  color: #e2e8f0;
+}
+
+.settings-btn.threshold-btn {
+  border-left: 2px solid rgba(59, 130, 246, 0.3);
+}
+
+.settings-btn.threshold-btn:hover {
+  border-left-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.settings-btn.email-btn {
+  border-left: 2px solid rgba(168, 85, 247, 0.3);
+}
+
+.settings-btn.email-btn:hover {
+  border-left-color: #a855f7;
+  background: rgba(168, 85, 247, 0.1);
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+  border-top: 1px solid rgba(148, 163, 184, 0.15);
+  padding-top: 12px;
+  margin-top: auto;
+}
+
+.logout-btn {
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+}
+
+.logout-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  color: #fecaca;
+}
+
+.sidebar.collapsed .logout-btn {
+  padding: 8px 6px;
+  font-size: 11px;
+}
+
+/* Sidebar scrollbar styling */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: rgba(148, 163, 184, 0.05);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.3);
 }
 
 .settings-btn.threshold-btn {
