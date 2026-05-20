@@ -17,7 +17,12 @@ const ThresholdSettings = ({
   const [thresholds, setThresholds] = useState({
     vibration: { min: 0, max: 150 },
     temperature: { min: 0, max: 150 },
-    power: { min: 0, max: 23000 },
+    power: {
+      R: { min: 0, max: 8000 },
+      S: { min: 0, max: 8000 },
+      T: { min: 0, max: 8000 },
+      total: { min: 0, max: 23000 },
+    },
     noise: { min: 0, max: 130 },
     ...currentThresholds,
   });
@@ -27,6 +32,22 @@ const ThresholdSettings = ({
 
   const handleThresholdChange = (sensor, field, value) => {
     const numValue = parseFloat(value) || 0;
+    // support nested power phases
+    if (sensor.startsWith("power.")) {
+      const [, phase] = sensor.split(".");
+      setThresholds((prev) => ({
+        ...prev,
+        power: {
+          ...prev.power,
+          [phase]: {
+            ...prev.power[phase],
+            [field]: numValue,
+          },
+        },
+      }));
+      return;
+    }
+
     setThresholds((prev) => ({
       ...prev,
       [sensor]: {
@@ -40,16 +61,37 @@ const ThresholdSettings = ({
     setError("");
     setSuccess("");
 
-    // Validation
-    for (const sensor in thresholds) {
+    // Validate simple sensors
+    for (const sensor of ["vibration", "temperature", "noise"]) {
       if (thresholds[sensor].min >= thresholds[sensor].max) {
         setError(`${sensor}: Min harus < Max`);
         return;
       }
     }
 
+    // Validate power phases
+    for (const phase of ["R", "S", "T", "total"]) {
+      if (thresholds.power[phase].min >= thresholds.power[phase].max) {
+        setError(`power.${phase}: Min harus < Max`);
+        return;
+      }
+    }
+
     try {
-      await onSave(thresholds);
+      // Convert to simple thresholds for monitoring: use max values
+      const simple = {
+        vibration: thresholds.vibration.max,
+        temperature: thresholds.temperature.max,
+        noise: thresholds.noise.max,
+        power: {
+          R: thresholds.power.R.max,
+          S: thresholds.power.S.max,
+          T: thresholds.power.T.max,
+          total: thresholds.power.total.max,
+        },
+      };
+
+      await onSave(simple);
       setSuccess("Thresholds saved successfully!");
       setTimeout(() => {
         onClose();
@@ -139,28 +181,103 @@ const ThresholdSettings = ({
 
           {/* Power */}
           <div className="threshold-group">
-            <label>Total Power (W)</label>
+            <label>Power per Phase (W)</label>
             <div className="threshold-inputs">
               <div className="input-pair">
-                <span>Min:</span>
+                <span>R Min:</span>
                 <input
                   type="number"
                   min="0"
-                  value={thresholds.power.min}
+                  value={thresholds.power.R.min}
                   onChange={(e) =>
-                    handleThresholdChange("power", "min", e.target.value)
+                    handleThresholdChange("power.R", "min", e.target.value)
                   }
                   disabled={isLoading}
                 />
               </div>
               <div className="input-pair">
-                <span>Max:</span>
+                <span>R Max:</span>
                 <input
                   type="number"
                   min="0"
-                  value={thresholds.power.max}
+                  value={thresholds.power.R.max}
                   onChange={(e) =>
-                    handleThresholdChange("power", "max", e.target.value)
+                    handleThresholdChange("power.R", "max", e.target.value)
+                  }
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="input-pair">
+                <span>S Min:</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={thresholds.power.S.min}
+                  onChange={(e) =>
+                    handleThresholdChange("power.S", "min", e.target.value)
+                  }
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="input-pair">
+                <span>S Max:</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={thresholds.power.S.max}
+                  onChange={(e) =>
+                    handleThresholdChange("power.S", "max", e.target.value)
+                  }
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="input-pair">
+                <span>T Min:</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={thresholds.power.T.min}
+                  onChange={(e) =>
+                    handleThresholdChange("power.T", "min", e.target.value)
+                  }
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="input-pair">
+                <span>T Max:</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={thresholds.power.T.max}
+                  onChange={(e) =>
+                    handleThresholdChange("power.T", "max", e.target.value)
+                  }
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="input-pair">
+                <span>Total Min:</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={thresholds.power.total.min}
+                  onChange={(e) =>
+                    handleThresholdChange("power.total", "min", e.target.value)
+                  }
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="input-pair">
+                <span>Total Max:</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={thresholds.power.total.max}
+                  onChange={(e) =>
+                    handleThresholdChange("power.total", "max", e.target.value)
                   }
                   disabled={isLoading}
                 />
