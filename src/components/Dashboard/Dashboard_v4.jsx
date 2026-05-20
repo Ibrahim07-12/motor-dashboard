@@ -204,16 +204,24 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   }, [sensorData]);
 
   // Render simple semicircle gauge with threshold-based green/red coloring
+  // Handles `power` specially: sensor value is expected in W, display in kW
   const renderGauge = (value, paramKey, config) => {
-    // Get the threshold for this parameter
-    const threshold = thresholds[paramKey] || config.max;
-    
-    // Calculate percentage for arc length (still based on max for visual consistency)
-    const percentage = Math.min((value / config.max) * 100, 100);
+    let displayValue = value;
+    let thresholdVal = thresholds[paramKey] !== undefined ? thresholds[paramKey] : config.max;
+
+    // If parameter is power, firmware/backend sends Watts (W). Convert to kW for display.
+    if (paramKey === "power") {
+      displayValue = value / 1000.0; // kW
+      // Convert threshold (which is stored in W) to kW for comparison
+      thresholdVal = thresholdVal / 1000.0;
+    }
+
+    // Calculate percentage for arc length (based on config.max which is in display units)
+    const percentage = Math.min((displayValue / config.max) * 100, 100);
     const dashOffset = 100 - percentage;
 
     // Determine color based on threshold comparison: GREEN if <=threshold, RED if >threshold
-    const gaugeColor = value <= threshold ? "#22c55e" : "#ef4444";
+    const gaugeColor = displayValue <= thresholdVal ? "#22c55e" : "#ef4444";
 
     return (
       <div className="gauge-container">
@@ -242,7 +250,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
           <text x="106" y="82" textAnchor="middle" className="gauge-max-label">{config.max}</text>
         </svg>
         <div className="gauge-value">
-          {value.toFixed(1)} <span>{config.unit}</span>
+          {displayValue.toFixed(1)} <span>{config.unit}</span>
         </div>
       </div>
     );
