@@ -18,10 +18,9 @@ const ThresholdSettings = ({
     vibration: { min: 0, max: 150 },
     temperature: { min: 0, max: 150 },
     power: {
-      R: { min: 0, max: 8000 },
-      S: { min: 0, max: 8000 },
-      T: { min: 0, max: 8000 },
-      total: { min: 0, max: 23000 },
+      R: { min: 0, max: 23000 },
+      S: { min: 0, max: 23000 },
+      T: { min: 0, max: 23000 },
     },
     noise: { min: 0, max: 130 },
     ...currentThresholds,
@@ -69,8 +68,8 @@ const ThresholdSettings = ({
       }
     }
 
-    // Validate power phases
-    for (const phase of ["R", "S", "T", "total"]) {
+    // Validate power phases (R/S/T)
+    for (const phase of ["R", "S", "T"]) {
       if (thresholds.power[phase].min >= thresholds.power[phase].max) {
         setError(`power.${phase}: Min harus < Max`);
         return;
@@ -87,7 +86,6 @@ const ThresholdSettings = ({
           R: thresholds.power.R.max,
           S: thresholds.power.S.max,
           T: thresholds.power.T.max,
-          total: thresholds.power.total.max,
         },
       };
 
@@ -258,30 +256,7 @@ const ThresholdSettings = ({
                 />
               </div>
 
-              <div className="input-pair">
-                <span>Total Min:</span>
-                <input
-                  type="number"
-                  min="0"
-                  value={thresholds.power.total.min}
-                  onChange={(e) =>
-                    handleThresholdChange("power.total", "min", e.target.value)
-                  }
-                  disabled={isLoading}
-                />
-              </div>
-              <div className="input-pair">
-                <span>Total Max:</span>
-                <input
-                  type="number"
-                  min="0"
-                  value={thresholds.power.total.max}
-                  onChange={(e) =>
-                    handleThresholdChange("power.total", "max", e.target.value)
-                  }
-                  disabled={isLoading}
-                />
-              </div>
+              {/* total removed - using per-phase thresholds only */}
             </div>
           </div>
 

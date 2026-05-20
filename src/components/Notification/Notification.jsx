@@ -54,11 +54,36 @@ const Notification = ({
     }
 
     // Check Power
-    if (sensorData.power && sensorData.power > thresholds.power) {
-      abnormalParams.push("Daya");
+    const powerThreshold = thresholds.power;
+    const phasesSrc = sensorData.phase || sensorData.powerPhases || {};
+    if (typeof powerThreshold === "object") {
+      if (phasesSrc.R && phasesSrc.R.power && phasesSrc.R.power > (powerThreshold.R || 0)) {
+        abnormalParams.push("Daya R");
+      } else if (sensorData.powerPhases && sensorData.powerPhases.R && sensorData.powerPhases.R > (powerThreshold.R || 0)) {
+        abnormalParams.push("Daya R");
+      }
+      if (phasesSrc.S && phasesSrc.S.power && phasesSrc.S.power > (powerThreshold.S || 0)) {
+        abnormalParams.push("Daya S");
+      } else if (sensorData.powerPhases && sensorData.powerPhases.S && sensorData.powerPhases.S > (powerThreshold.S || 0)) {
+        abnormalParams.push("Daya S");
+      }
+      if (phasesSrc.T && phasesSrc.T.power && phasesSrc.T.power > (powerThreshold.T || 0)) {
+        abnormalParams.push("Daya T");
+      } else if (sensorData.powerPhases && sensorData.powerPhases.T && sensorData.powerPhases.T > (powerThreshold.T || 0)) {
+        abnormalParams.push("Daya T");
+      }
+      // also check total if provided
+      if (sensorData.power && powerThreshold.total && sensorData.power > powerThreshold.total) {
+        abnormalParams.push("Daya Total");
+      }
+    } else {
+      if (sensorData.power && sensorData.power > (powerThreshold || 0)) {
+        abnormalParams.push("Daya");
+      }
     }
 
-    // Generate notification message
+    // Generate notification message for parameter threshold exceedances
+    const alertsToSet = [];
     if (abnormalParams.length > 0) {
       let message = "";
       const motorDisplay = getMotorDisplayName(motorId);
@@ -73,17 +98,27 @@ const Notification = ({
         message = `${abnormalParams[0]}, ${abnormalParams[1]}, ${abnormalParams[2]} dan ${abnormalParams[3]} Motor ${motorDisplay} melebihi batas aman.`;
       }
 
-      setAlerts([
-        {
-          id: `alert-${Date.now()}`,
-          message,
-          type: "warning",
-          timestamp: new Date(),
-        },
-      ]);
-    } else {
-      setAlerts([]);
+      alertsToSet.push({ id: `alert-${Date.now()}`, message, type: "warning", timestamp: new Date() });
     }
+
+    // Generate separate alerts for imbalance (one per unbalanced phase)
+    const imbalance = sensorData.imbalancePhases;
+    if (imbalance && imbalance.any) {
+      const motorDisplay = getMotorDisplayName(motorId);
+      Object.keys(imbalance).forEach((k) => {
+        if (k === 'any' || k === 'max') return;
+        if (imbalance[k] && imbalance[k].unbalanced) {
+          alertsToSet.push({
+            id: `imbalance-${k}-${Date.now()}`,
+            message: `Phase ${k} Power Unbalance on Motor ${motorDisplay}`,
+            type: "warning",
+            timestamp: new Date(),
+          });
+        }
+      });
+    }
+
+    setAlerts(alertsToSet);
   }, [sensorData, isEnabled, motorId, thresholds]);
 
   if (!isEnabled || alerts.length === 0) {
