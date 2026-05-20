@@ -99,7 +99,7 @@ const MonitoringPage = ({ user = {}, onLogout = () => {} }) => {
       {/* Main Content */}
       <div className={`main-content ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
         {/* Dashboard */}
-        <Dashboard sensorData={sensorData} motorId={motorId} />
+        <Dashboard sensorData={sensorData} motorId={motorId} thresholds={thresholds} />
       </div>
 
       {/* Notification Alerts */}

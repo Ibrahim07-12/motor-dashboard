@@ -168,8 +168,8 @@ const generateMonthlyData = () => {
   };
 };
 
-const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout" }) => {
-  // Real-time gauge values
+const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", thresholds = {} }) => {
+  // Real-time gauge values - update from sensorData prop
   const [gauges, setGauges] = useState({
     vibration: 0,
     temperature: 0,
@@ -191,23 +191,29 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout" }) => {
   );
   const [averageMonth, setAverageMonth] = useState(new Date().toISOString().slice(0, 7));
 
-  // Update gauge values (simulate real-time)
+  // Update gauge values from real sensorData prop
   useEffect(() => {
-    const interval = setInterval(() => {
+    if (sensorData && Object.keys(sensorData).length > 0) {
       setGauges({
-        vibration: Math.random() * 80,
-        temperature: Math.random() * 800,
-        power: Math.random() * 20,
-        noise: Math.random() * 140,
+        vibration: sensorData.vibration || 0,
+        temperature: sensorData.temperature || 0,
+        power: sensorData.power || 0,
+        noise: sensorData.noise || 0,
       });
-    }, 2000);
-    return () => clearInterval(interval);
-  }, []);
+    }
+  }, [sensorData]);
 
-  // Render simple semicircle gauge
-  const renderGauge = (value, config) => {
+  // Render simple semicircle gauge with threshold-based green/red coloring
+  const renderGauge = (value, paramKey, config) => {
+    // Get the threshold for this parameter
+    const threshold = thresholds[paramKey] || config.max;
+    
+    // Calculate percentage for arc length (still based on max for visual consistency)
     const percentage = Math.min((value / config.max) * 100, 100);
     const dashOffset = 100 - percentage;
+
+    // Determine color based on threshold comparison: GREEN if <=threshold, RED if >threshold
+    const gaugeColor = value <= threshold ? "#22c55e" : "#ef4444";
 
     return (
       <div className="gauge-container">
@@ -224,14 +230,14 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout" }) => {
           <path
             d="M 14 66 A 46 46 0 0 1 106 66"
             pathLength="100"
-            stroke={config.color}
+            stroke={gaugeColor}
             strokeWidth="9"
             fill="none"
             strokeLinecap="round"
             strokeDasharray="100"
             strokeDashoffset={dashOffset}
           />
-          <circle cx="60" cy="66" r="3.2" fill={config.color} />
+          <circle cx="60" cy="66" r="3.2" fill={gaugeColor} />
           <text x="14" y="82" textAnchor="middle" className="gauge-min-label">0</text>
           <text x="106" y="82" textAnchor="middle" className="gauge-max-label">{config.max}</text>
         </svg>
@@ -282,10 +288,10 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout" }) => {
 
       {/* Real-time Gauges */}
       <div className="gauges-section">
-        {renderGauge(gauges.vibration, PARAMETER_CONFIGS.vibration)}
-        {renderGauge(gauges.temperature, PARAMETER_CONFIGS.temperature)}
-        {renderGauge(gauges.power, PARAMETER_CONFIGS.power)}
-        {renderGauge(gauges.noise, PARAMETER_CONFIGS.noise)}
+        {renderGauge(gauges.vibration, "vibration", PARAMETER_CONFIGS.vibration)}
+        {renderGauge(gauges.temperature, "temperature", PARAMETER_CONFIGS.temperature)}
+        {renderGauge(gauges.power, "power", PARAMETER_CONFIGS.power)}
+        {renderGauge(gauges.noise, "noise", PARAMETER_CONFIGS.noise)}
       </div>
 
       {/* Historical Chart */}
