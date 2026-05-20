@@ -20,13 +20,9 @@ const MonitoringPage = ({ user = {}, onLogout = () => {} }) => {
   const [sensorData, setSensorData] = useState({
     vibration: 12.5,
     temperature: 45.0,
-    power: 8900,
+    power: 0,
     noise: 78.5,
-    powerPhases: {
-      R: 0,
-      S: 0,
-      T: 0,
-    },
+    powerPhases: { R: 0, S: 0, T: 0 },
     imbalancePhases: { R: { unbalanced: false, deviation: 0 }, S: { unbalanced: false, deviation: 0 }, T: { unbalanced: false, deviation: 0 } },
   });
   const [notificationEnabled, setNotificationEnabled] = useState(true);
@@ -65,12 +61,18 @@ const MonitoringPage = ({ user = {}, onLogout = () => {} }) => {
     return result;
   };
 
-  const [dummyRunning, setDummyRunning] = useState(false);
-  const dummyRef = React.useRef(null);
-
   // Modals state
   const [showThresholdModal, setShowThresholdModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
+
+  const handleToggleNotification = () => {
+    setNotificationEnabled(!notificationEnabled);
+  };
+
+  const handleSaveThresholds = async (newThresholds) => {
+    setThresholds(newThresholds);
+    console.log("Saving thresholds:", newThresholds);
+  };
 
   // Real-time polling every 2 seconds
   useEffect(() => {
@@ -100,94 +102,10 @@ const MonitoringPage = ({ user = {}, onLogout = () => {} }) => {
       }
     };
 
-    // Fetch immediately on mount
     fetchLatestSensorData();
-
-    // Then poll every 2 seconds
     const interval = setInterval(fetchLatestSensorData, 2000);
     return () => clearInterval(interval);
   }, [motorId]);
-
-  const handleToggleNotification = () => {
-    setNotificationEnabled(!notificationEnabled);
-    // Optionally save to backend: await settingsAPI.updateNotifications({ enabled: !notificationEnabled })
-  };
-
-  const handleSaveThresholds = async (newThresholds) => {
-    // Update thresholds
-    setThresholds(newThresholds);
-    console.log("Saving thresholds:", newThresholds);
-    // await settingsAPI.updateThresholds(newThresholds);
-  };
-
-  // Dummy test runner: cycles through sample sets to validate alerts and gauges
-  const startDummyTest = () => {
-    if (dummyRunning) return;
-    setDummyRunning(true);
-
-    const samples = [];
-    // sample 1: all normal
-    samples.push({
-      vibration: Math.max(0, thresholds.vibration - 5),
-      temperature: Math.max(0, thresholds.temperature - 10),
-      noise: Math.max(0, thresholds.noise - 5),
-      powerPhases: { R: Math.max(0, thresholds.power.R - 500), S: Math.max(0, thresholds.power.S - 400), T: Math.max(0, thresholds.power.T - 300) },
-    });
-    // sample 2: phase R overload
-    samples.push({
-      vibration: thresholds.vibration - 2,
-      temperature: thresholds.temperature - 5,
-      noise: thresholds.noise - 2,
-      powerPhases: { R: thresholds.power.R + 2000, S: Math.max(0, thresholds.power.S - 200), T: Math.max(0, thresholds.power.T - 200) },
-    });
-    // sample 3: temperature overload
-    samples.push({
-      vibration: thresholds.vibration - 2,
-      temperature: thresholds.temperature + 10,
-      noise: thresholds.noise - 2,
-      powerPhases: { R: Math.max(0, thresholds.power.R - 200), S: Math.max(0, thresholds.power.S - 200), T: Math.max(0, thresholds.power.T - 200) },
-    });
-    // sample 4: noise overload
-    samples.push({
-      vibration: thresholds.vibration - 2,
-      temperature: thresholds.temperature - 2,
-      noise: thresholds.noise + 10,
-      powerPhases: { R: Math.max(0, thresholds.power.R - 200), S: Math.max(0, thresholds.power.S - 200), T: Math.max(0, thresholds.power.T - 200) },
-    });
-    // sample 5: vibration overload
-    samples.push({
-      vibration: thresholds.vibration + 8,
-      temperature: thresholds.temperature - 2,
-      noise: thresholds.noise - 2,
-      powerPhases: { R: Math.max(0, thresholds.power.R - 200), S: Math.max(0, thresholds.power.S - 200), T: Math.max(0, thresholds.power.T - 200) },
-    });
-
-    let i = 0;
-    dummyRef.current = setInterval(() => {
-      const s = samples[i % samples.length];
-      const phases = s.powerPhases || { R: 0, S: 0, T: 0 };
-      const total = phases.R + phases.S + phases.T;
-      const imbalance = computeImbalance(phases, IMBALANCE_PERCENT);
-      setSensorData((prev) => ({
-        ...prev,
-        vibration: s.vibration,
-        temperature: s.temperature,
-        noise: s.noise,
-        power: total,
-        powerPhases: phases,
-        imbalancePhases: imbalance,
-      }));
-      i += 1;
-    }, 2000);
-  };
-
-  const stopDummyTest = () => {
-    if (dummyRef.current) {
-      clearInterval(dummyRef.current);
-      dummyRef.current = null;
-    }
-    setDummyRunning(false);
-  };
 
   const handleSaveEmails = async (emails) => {
     // Optionally save to backend in future
@@ -211,16 +129,7 @@ const MonitoringPage = ({ user = {}, onLogout = () => {} }) => {
       {/* Main Content */}
       <div className={`main-content ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
         {/* Dashboard */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <div />
-          <div>
-            {!dummyRunning ? (
-              <button className="btn-export" onClick={startDummyTest}>Start Dummy Test</button>
-            ) : (
-              <button className="btn-export" onClick={stopDummyTest}>Stop Dummy Test</button>
-            )}
-          </div>
-        </div>
+        {/* Dummy test controls removed */}
         <Dashboard sensorData={sensorData} motorId={motorId} thresholds={thresholds} />
       </div>
 

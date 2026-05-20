@@ -107,65 +107,19 @@ const normalizeToPercentage = (value, max) => {
   return Math.min((value / max) * 100, 100);
 };
 
-// Helper: Generate dummy data untuk historis
+// Helper: Generate historical data (empty by default — real data should be fetched)
 const generateHistoricalData = (hours = 24) => {
-  const data = [];
-  for (let i = 0; i < hours; i++) {
-    data.push({
-      time: `${String(i).padStart(2, "0")}:00`,
-      vibration: normalizeToPercentage(Math.random() * 80, 100),
-      temperature: normalizeToPercentage(Math.random() * 800, 1024),
-      power: normalizeToPercentage(Math.random() * 20, 23),
-      noise: normalizeToPercentage(Math.random() * 140, 160),
-    });
-  }
-  return data;
+  return [];
 };
 
-// Helper: Generate dummy weekly data
+// Helper: Generate weekly data (empty by default)
 const generateWeeklyData = () => {
-  const days = ["sen", "sel", "rab", "kam", "jum"];
-  return {
-    noise: days.map((day) => ({
-      name: day,
-      value: Math.random() * 160,
-    })),
-    temperature: days.map((day) => ({
-      name: day,
-      value: Math.random() * 1024,
-    })),
-    vibration: days.map((day) => ({
-      name: day,
-      value: Math.random() * 100,
-    })),
-    power: days.map((day) => ({
-      name: day,
-      value: Math.random() * 23,
-    })),
-  };
+  return { noise: [], temperature: [], vibration: [], power: [] };
 };
 
-// Helper: Generate dummy monthly data
+// Helper: Generate monthly data (empty by default)
 const generateMonthlyData = () => {
-  const days = ["5", "10", "15", "20", "25", "30"];
-  return {
-    noise: days.map((day) => ({
-      name: day,
-      value: Math.random() * 160,
-    })),
-    temperature: days.map((day) => ({
-      name: day,
-      value: Math.random() * 1024,
-    })),
-    vibration: days.map((day) => ({
-      name: day,
-      value: Math.random() * 100,
-    })),
-    power: days.map((day) => ({
-      name: day,
-      value: Math.random() * 23,
-    })),
-  };
+  return { noise: [], temperature: [], vibration: [], power: [] };
 };
 
 const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", thresholds = {} }) => {
