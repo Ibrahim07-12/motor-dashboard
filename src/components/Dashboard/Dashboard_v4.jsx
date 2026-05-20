@@ -208,7 +208,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   const renderMiniPhaseGauge = (phaseKey, value, phaseThresholdW, isUnbalanced = false) => {
     const displayValue = value / 1000.0;
     const thresholdKw = phaseThresholdW / 1000.0;
-    const percentage = Math.min((displayValue / (PARAMETER_CONFIGS.power.max / 3)) * 100, 100);
+    const percentage = Math.min((displayValue / PARAMETER_CONFIGS.power.max) * 100, 100);
     const dashOffset = 100 - percentage;
     let gaugeColor = displayValue <= thresholdKw ? "#22c55e" : "#ef4444";
     if (isUnbalanced) gaugeColor = "#ef4444";
@@ -236,6 +236,8 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
             strokeDashoffset={dashOffset}
           />
           <circle cx="50" cy="52" r="2.5" fill={gaugeColor} />
+          <text x="12" y="67" textAnchor="start" className="mini-phase-min-label">0</text>
+          <text x="88" y="67" textAnchor="end" className="mini-phase-max-label">{PARAMETER_CONFIGS.power.max}</text>
         </svg>
         <div className="mini-phase-value">
           {displayValue.toFixed(1)} <span>kW</span>
