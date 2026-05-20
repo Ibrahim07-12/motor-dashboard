@@ -103,6 +103,50 @@
   margin-left: 2px;
 }
 
+.mini-phase-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.mini-phase-gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 0;
+}
+
+.mini-phase-label {
+  font-size: 8px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.mini-phase-dial {
+  width: 100%;
+  max-width: 56px;
+  height: 40px;
+  overflow: visible;
+}
+
+.mini-phase-value {
+  font-size: 9px;
+  font-weight: 700;
+  color: #1e293b;
+  text-align: center;
+  line-height: 1;
+}
+
+.mini-phase-value span {
+  font-size: 7px;
+  font-weight: 500;
+  color: #64748b;
+  margin-left: 1px;
+}
+
 /* Chart Section */
 .chart-section {
   display: flex;

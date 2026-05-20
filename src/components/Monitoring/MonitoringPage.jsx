@@ -22,6 +22,11 @@ const MonitoringPage = ({ user = {}, onLogout = () => {} }) => {
     temperature: 45.0,
     power: 8900,
     noise: 78.5,
+    powerPhases: {
+      R: 0,
+      S: 0,
+      T: 0,
+    },
   });
   const [notificationEnabled, setNotificationEnabled] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -50,6 +55,11 @@ const MonitoringPage = ({ user = {}, onLogout = () => {} }) => {
             temperature: data.temperature || 0,
             power: data.power?.totalPower || 0,
             noise: data.noise || 0,
+            powerPhases: {
+              R: data.phase?.R?.power || 0,
+              S: data.phase?.S?.power || 0,
+              T: data.phase?.T?.power || 0,
+            },
           });
         }
       } catch (error) {

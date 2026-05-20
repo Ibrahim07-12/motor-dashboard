@@ -203,11 +203,56 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
     }
   }, [sensorData]);
 
+  const powerPhases = sensorData.powerPhases || { R: 0, S: 0, T: 0 };
+
+  const renderMiniPhaseGauge = (phaseKey, value, phaseThresholdW) => {
+    const displayValue = value / 1000.0;
+    const thresholdKw = phaseThresholdW / 1000.0;
+    const percentage = Math.min((displayValue / (PARAMETER_CONFIGS.power.max / 3)) * 100, 100);
+    const dashOffset = 100 - percentage;
+    const gaugeColor = displayValue <= thresholdKw ? "#22c55e" : "#ef4444";
+
+    return (
+      <div className="mini-phase-gauge">
+        <div className="mini-phase-label">{phaseKey}</div>
+        <svg viewBox="0 0 100 70" className="mini-phase-dial">
+          <path
+            d="M 12 52 A 38 38 0 0 1 88 52"
+            pathLength="100"
+            stroke="#e5e7eb"
+            strokeWidth="7"
+            fill="none"
+            strokeLinecap="round"
+          />
+          <path
+            d="M 12 52 A 38 38 0 0 1 88 52"
+            pathLength="100"
+            stroke={gaugeColor}
+            strokeWidth="7"
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray="100"
+            strokeDashoffset={dashOffset}
+          />
+          <circle cx="50" cy="52" r="2.5" fill={gaugeColor} />
+        </svg>
+        <div className="mini-phase-value">
+          {displayValue.toFixed(1)} <span>kW</span>
+        </div>
+      </div>
+    );
+  };
+
   // Render simple semicircle gauge with threshold-based green/red coloring
   // Handles `power` specially: sensor value is expected in W, display in kW
   const renderGauge = (value, paramKey, config) => {
     let displayValue = value;
-    let thresholdVal = thresholds[paramKey] !== undefined ? thresholds[paramKey] : config.max;
+    const rawThreshold = thresholds[paramKey] !== undefined
+      ? thresholds[paramKey]
+      : paramKey === "power"
+        ? 8000
+        : config.max;
+    let thresholdVal = rawThreshold;
 
     // If parameter is power, firmware/backend sends Watts (W). Convert to kW for display.
     if (paramKey === "power") {
@@ -223,9 +268,11 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
     // Determine color based on threshold comparison: GREEN if <=threshold, RED if >threshold
     const gaugeColor = displayValue <= thresholdVal ? "#22c55e" : "#ef4444";
 
+    const phaseThreshold = thresholdVal / 3;
+
     return (
       <div className="gauge-container">
-        <div className="gauge-label">{config.name}</div>
+        <div className="gauge-label">{paramKey === "power" ? "Power (Total)" : config.name}</div>
         <svg viewBox="0 0 120 88" className="gauge-dial">
           <path
             d="M 14 66 A 46 46 0 0 1 106 66"
@@ -252,6 +299,13 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
         <div className="gauge-value">
           {displayValue.toFixed(1)} <span>{config.unit}</span>
         </div>
+        {paramKey === "power" && (
+          <div className="mini-phase-row">
+            {renderMiniPhaseGauge("R", powerPhases.R || 0, phaseThreshold)}
+            {renderMiniPhaseGauge("S", powerPhases.S || 0, phaseThreshold)}
+            {renderMiniPhaseGauge("T", powerPhases.T || 0, phaseThreshold)}
+          </div>
+        )}
       </div>
     );
   };
