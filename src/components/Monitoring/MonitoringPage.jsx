@@ -18,10 +18,10 @@ import "./MonitoringPage.css";
 const MonitoringPage = ({ user = {}, onLogout = () => {} }) => {
   const [motorId] = useState("motor_main_shakeout");
   const [sensorData, setSensorData] = useState({
-    vibration: 12.5,
-    temperature: 45.0,
+    vibration: 0,
+    temperature: 0,
     power: 0,
-    noise: 78.5,
+    noise: 0,
     powerPhases: { R: 0, S: 0, T: 0 },
     imbalancePhases: { R: { unbalanced: false, deviation: 0 }, S: { unbalanced: false, deviation: 0 }, T: { unbalanced: false, deviation: 0 } },
   });

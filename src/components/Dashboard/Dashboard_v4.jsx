@@ -145,6 +145,10 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   );
   const [averageMonth, setAverageMonth] = useState(new Date().toISOString().slice(0, 7));
 
+  const historicalTicks = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "23:00"];
+  const weeklyTicks = ["sen", "sel", "rab", "kam", "jum"];
+  const monthlyTicks = ["1", "5", "10", "15", "20", "25", "30"];
+
   // Update gauge values from real sensorData prop
   useEffect(() => {
     if (sensorData && Object.keys(sensorData).length > 0) {
@@ -322,7 +326,14 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
         <ResponsiveContainer width="100%" height={200}>
           <LineChart data={historicalData} margin={{ top: 8, right: 8, left: 44, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis dataKey="time" stroke="#9CA3AF" />
+            <XAxis
+              dataKey="time"
+              type="category"
+              allowDuplicatedCategory={false}
+              ticks={historicalTicks}
+              stroke="#9CA3AF"
+              tick={{ fontSize: 10 }}
+            />
             <YAxis
               width={64}
               label={{ value: "Level Relatif (%)", angle: -90, position: "insideLeft", dx: -20, dy: 40 }}
@@ -398,6 +409,9 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis 
                   dataKey="name" 
+                  type="category"
+                  allowDuplicatedCategory={false}
+                  ticks={chartMode === "weekly" ? weeklyTicks : monthlyTicks}
                   stroke="#9CA3AF" 
                   tick={{ fontSize: 9 }}
                   angle={0}
@@ -434,6 +448,9 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis 
                   dataKey="name" 
+                  type="category"
+                  allowDuplicatedCategory={false}
+                  ticks={chartMode === "weekly" ? weeklyTicks : monthlyTicks}
                   stroke="#9CA3AF" 
                   tick={{ fontSize: 9 }}
                   angle={0}
@@ -470,6 +487,9 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis 
                   dataKey="name" 
+                  type="category"
+                  allowDuplicatedCategory={false}
+                  ticks={chartMode === "weekly" ? weeklyTicks : monthlyTicks}
                   stroke="#9CA3AF" 
                   tick={{ fontSize: 9 }}
                   angle={0}
@@ -506,6 +526,9 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis 
                   dataKey="name" 
+                  type="category"
+                  allowDuplicatedCategory={false}
+                  ticks={chartMode === "weekly" ? weeklyTicks : monthlyTicks}
                   stroke="#9CA3AF" 
                   tick={{ fontSize: 9 }}
                   angle={0}
