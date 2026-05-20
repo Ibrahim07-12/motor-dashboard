@@ -259,6 +259,47 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
     );
   };
 
+  // General gauge renderer for vibration / temperature / noise
+  const renderGauge = (value, paramKey, config) => {
+    const thresholdRaw = thresholds[paramKey] !== undefined ? thresholds[paramKey] : config.max;
+    const displayValue = value;
+    const percentage = Math.min((displayValue / config.max) * 100, 100);
+    const dashOffset = 100 - percentage;
+    const gaugeColor = displayValue <= thresholdRaw ? "#22c55e" : "#ef4444";
+
+    return (
+      <div className="gauge-container">
+        <div className="gauge-label">{config.name}</div>
+        <svg viewBox="0 0 120 88" className="gauge-dial">
+          <path
+            d="M 14 66 A 46 46 0 0 1 106 66"
+            pathLength="100"
+            stroke="#e5e7eb"
+            strokeWidth="9"
+            fill="none"
+            strokeLinecap="round"
+          />
+          <path
+            d="M 14 66 A 46 46 0 0 1 106 66"
+            pathLength="100"
+            stroke={gaugeColor}
+            strokeWidth="9"
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray="100"
+            strokeDashoffset={dashOffset}
+          />
+          <circle cx="60" cy="66" r="3.2" fill={gaugeColor} />
+          <text x="14" y="82" textAnchor="middle" className="gauge-min-label">0</text>
+          <text x="106" y="82" textAnchor="middle" className="gauge-max-label">{config.max}</text>
+        </svg>
+        <div className="gauge-value">
+          {displayValue.toFixed(1)} <span>{config.unit}</span>
+        </div>
+      </div>
+    );
+  };
+
   const currentData = chartMode === "weekly" ? weeklyData : monthlyData;
 
   const formatTooltipLabel = (label) => {
