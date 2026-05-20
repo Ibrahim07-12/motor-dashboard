@@ -149,6 +149,17 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   const weeklyTicks = ["sen", "sel", "rab", "kam", "jum"];
   const monthlyTicks = ["1", "5", "10", "15", "20", "25", "30"];
 
+  // Provide fallback display data when datasets are empty so axes/ticks render
+  const displayHistorical = (historicalData && historicalData.length)
+    ? historicalData
+    : historicalTicks.map((t) => ({ time: t, vibration: 0, temperature: 0, power: 0, noise: 0 }));
+
+  const makeCategoryFallback = (ticks) => ticks.map((n) => ({ name: n, value: 0 }));
+  const displayNoise = (currentData.noise && currentData.noise.length) ? currentData.noise : makeCategoryFallback(chartMode === "weekly" ? weeklyTicks : monthlyTicks);
+  const displayTemperature = (currentData.temperature && currentData.temperature.length) ? currentData.temperature : makeCategoryFallback(chartMode === "weekly" ? weeklyTicks : monthlyTicks);
+  const displayVibration = (currentData.vibration && currentData.vibration.length) ? currentData.vibration : makeCategoryFallback(chartMode === "weekly" ? weeklyTicks : monthlyTicks);
+  const displayPower = (currentData.power && currentData.power.length) ? currentData.power : makeCategoryFallback(chartMode === "weekly" ? weeklyTicks : monthlyTicks);
+
   // Update gauge values from real sensorData prop
   useEffect(() => {
     if (sensorData && Object.keys(sensorData).length > 0) {
@@ -324,7 +335,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
           </div>
         </div>
         <ResponsiveContainer width="100%" height={200}>
-          <LineChart data={historicalData} margin={{ top: 8, right: 8, left: 44, bottom: 0 }}>
+          <LineChart data={displayHistorical} margin={{ top: 8, right: 8, left: 44, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
             <XAxis
               dataKey="time"
@@ -405,7 +416,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
               {PARAMETER_CONFIGS.noise.name}
             </h3>
               <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={currentData.noise} margin={{ top: 4, right: 0, bottom: 28, left: 20 }}>
+              <BarChart data={displayNoise} margin={{ top: 4, right: 0, bottom: 28, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis 
                   dataKey="name" 
@@ -444,7 +455,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
               {PARAMETER_CONFIGS.temperature.name}
             </h3>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={currentData.temperature} margin={{ top: 4, right: 0, bottom: 28, left: 20 }}>
+              <BarChart data={displayTemperature} margin={{ top: 4, right: 0, bottom: 28, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis 
                   dataKey="name" 
@@ -483,7 +494,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
               {PARAMETER_CONFIGS.vibration.name}
             </h3>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={currentData.vibration} margin={{ top: 4, right: 0, bottom: 28, left: 20 }}>
+              <BarChart data={displayVibration} margin={{ top: 4, right: 0, bottom: 28, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis 
                   dataKey="name" 
@@ -522,7 +533,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
               {PARAMETER_CONFIGS.power.name}
             </h3>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={currentData.power} margin={{ top: 4, right: 0, bottom: 28, left: 20 }}>
+              <BarChart data={displayPower} margin={{ top: 4, right: 0, bottom: 28, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis 
                   dataKey="name" 
