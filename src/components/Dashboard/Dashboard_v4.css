@@ -111,6 +111,12 @@
   margin-top: 2px;
 }
 
+.power-phase-card {
+  justify-content: flex-start;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
 .mini-phase-gauge {
   display: flex;
   flex-direction: column;

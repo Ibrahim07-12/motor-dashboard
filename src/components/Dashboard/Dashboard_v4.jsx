@@ -243,69 +243,18 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
     );
   };
 
-  // Render simple semicircle gauge with threshold-based green/red coloring
-  // Handles `power` specially: sensor value is expected in W, display in kW
-  const renderGauge = (value, paramKey, config) => {
-    let displayValue = value;
-    const rawThreshold = thresholds[paramKey] !== undefined
-      ? thresholds[paramKey]
-      : paramKey === "power"
-        ? 8000
-        : config.max;
-    let thresholdVal = rawThreshold;
-
-    // If parameter is power, firmware/backend sends Watts (W). Convert to kW for display.
-    if (paramKey === "power") {
-      displayValue = value / 1000.0; // kW
-      // Convert threshold (which is stored in W) to kW for comparison
-      thresholdVal = thresholdVal / 1000.0;
-    }
-
-    // Calculate percentage for arc length (based on config.max which is in display units)
-    const percentage = Math.min((displayValue / config.max) * 100, 100);
-    const dashOffset = 100 - percentage;
-
-    // Determine color based on threshold comparison: GREEN if <=threshold, RED if >threshold
-    const gaugeColor = displayValue <= thresholdVal ? "#22c55e" : "#ef4444";
-
-    const phaseThreshold = thresholdVal / 3;
+  const renderPhaseCard = () => {
+    const powerThreshold = thresholds.power !== undefined ? thresholds.power : 8000;
+    const phaseThreshold = powerThreshold / 3;
 
     return (
-      <div className="gauge-container">
-        <div className="gauge-label">{paramKey === "power" ? "Power (Total)" : config.name}</div>
-        <svg viewBox="0 0 120 88" className="gauge-dial">
-          <path
-            d="M 14 66 A 46 46 0 0 1 106 66"
-            pathLength="100"
-            stroke="#e5e7eb"
-            strokeWidth="9"
-            fill="none"
-            strokeLinecap="round"
-          />
-          <path
-            d="M 14 66 A 46 46 0 0 1 106 66"
-            pathLength="100"
-            stroke={gaugeColor}
-            strokeWidth="9"
-            fill="none"
-            strokeLinecap="round"
-            strokeDasharray="100"
-            strokeDashoffset={dashOffset}
-          />
-          <circle cx="60" cy="66" r="3.2" fill={gaugeColor} />
-          <text x="14" y="82" textAnchor="middle" className="gauge-min-label">0</text>
-          <text x="106" y="82" textAnchor="middle" className="gauge-max-label">{config.max}</text>
-        </svg>
-        <div className="gauge-value">
-          {displayValue.toFixed(1)} <span>{config.unit}</span>
+      <div className="gauge-container power-phase-card">
+        <div className="gauge-label">Power Phase (R / S / T)</div>
+        <div className="mini-phase-row">
+          {renderMiniPhaseGauge("R", powerPhases.R || 0, phaseThreshold)}
+          {renderMiniPhaseGauge("S", powerPhases.S || 0, phaseThreshold)}
+          {renderMiniPhaseGauge("T", powerPhases.T || 0, phaseThreshold)}
         </div>
-        {paramKey === "power" && (
-          <div className="mini-phase-row">
-            {renderMiniPhaseGauge("R", powerPhases.R || 0, phaseThreshold)}
-            {renderMiniPhaseGauge("S", powerPhases.S || 0, phaseThreshold)}
-            {renderMiniPhaseGauge("T", powerPhases.T || 0, phaseThreshold)}
-          </div>
-        )}
       </div>
     );
   };
@@ -352,7 +301,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
       <div className="gauges-section">
         {renderGauge(gauges.vibration, "vibration", PARAMETER_CONFIGS.vibration)}
         {renderGauge(gauges.temperature, "temperature", PARAMETER_CONFIGS.temperature)}
-        {renderGauge(gauges.power, "power", PARAMETER_CONFIGS.power)}
+        {renderPhaseCard()}
         {renderGauge(gauges.noise, "noise", PARAMETER_CONFIGS.noise)}
       </div>
 
