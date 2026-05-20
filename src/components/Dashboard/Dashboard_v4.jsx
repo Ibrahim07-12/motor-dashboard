@@ -145,21 +145,6 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   );
   const [averageMonth, setAverageMonth] = useState(new Date().toISOString().slice(0, 7));
 
-  const historicalTicks = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "23:00"];
-  const weeklyTicks = ["sen", "sel", "rab", "kam", "jum"];
-  const monthlyTicks = ["1", "5", "10", "15", "20", "25", "30"];
-
-  // Provide fallback display data when datasets are empty so axes/ticks render
-  const displayHistorical = (historicalData && historicalData.length)
-    ? historicalData
-    : historicalTicks.map((t) => ({ time: t, vibration: 0, temperature: 0, power: 0, noise: 0 }));
-
-  const makeCategoryFallback = (ticks) => ticks.map((n) => ({ name: n, value: 0 }));
-  const displayNoise = (currentData.noise && currentData.noise.length) ? currentData.noise : makeCategoryFallback(chartMode === "weekly" ? weeklyTicks : monthlyTicks);
-  const displayTemperature = (currentData.temperature && currentData.temperature.length) ? currentData.temperature : makeCategoryFallback(chartMode === "weekly" ? weeklyTicks : monthlyTicks);
-  const displayVibration = (currentData.vibration && currentData.vibration.length) ? currentData.vibration : makeCategoryFallback(chartMode === "weekly" ? weeklyTicks : monthlyTicks);
-  const displayPower = (currentData.power && currentData.power.length) ? currentData.power : makeCategoryFallback(chartMode === "weekly" ? weeklyTicks : monthlyTicks);
-
   // Update gauge values from real sensorData prop
   useEffect(() => {
     if (sensorData && Object.keys(sensorData).length > 0) {
@@ -274,6 +259,21 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   };
 
   const currentData = chartMode === "weekly" ? weeklyData : monthlyData;
+
+  // Tick definitions for chart axes
+  const historicalTicks = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "23:00"];
+  const weeklyTicks = ["sen", "sel", "rab", "kam", "jum"];
+  const monthlyTicks = ["1", "5", "10", "15", "20", "25", "30"];
+
+  // Provide fallback display data when datasets are empty so axes/ticks render
+  const makeCategoryFallback = (ticks) => ticks.map((n) => ({ name: n, value: 0 }));
+  const displayHistorical = (historicalData && historicalData.length)
+    ? historicalData
+    : historicalTicks.map((t) => ({ time: t, vibration: 0, temperature: 0, power: 0, noise: 0 }));
+  const displayNoise = (currentData.noise && currentData.noise.length) ? currentData.noise : makeCategoryFallback(chartMode === "weekly" ? weeklyTicks : monthlyTicks);
+  const displayTemperature = (currentData.temperature && currentData.temperature.length) ? currentData.temperature : makeCategoryFallback(chartMode === "weekly" ? weeklyTicks : monthlyTicks);
+  const displayVibration = (currentData.vibration && currentData.vibration.length) ? currentData.vibration : makeCategoryFallback(chartMode === "weekly" ? weeklyTicks : monthlyTicks);
+  const displayPower = (currentData.power && currentData.power.length) ? currentData.power : makeCategoryFallback(chartMode === "weekly" ? weeklyTicks : monthlyTicks);
 
   const formatTooltipLabel = (label) => {
     if (chartMode === "weekly") {
