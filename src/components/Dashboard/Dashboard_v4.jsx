@@ -148,6 +148,23 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
     new Date().toISOString().split("T")[0]
   );
   const [averageMonth, setAverageMonth] = useState(new Date().toISOString().slice(0, 7));
+  // Week picker (HTML week input -> e.g. 2026-W21)
+  const getCurrentWeekString = () => {
+    const d = new Date();
+    // get Monday of current week
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(d.setDate(diff));
+    const year = monday.getFullYear();
+    // compute week number (ISO week)
+    const tmp = new Date(Date.UTC(monday.getFullYear(), monday.getMonth(), monday.getDate()));
+    tmp.setUTCDate(tmp.getUTCDate() + 4 - (tmp.getUTCDay()||7));
+    const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(),0,1));
+    const weekNo = Math.ceil((((tmp - yearStart) / 86400000) + 1)/7);
+    const weekStr = `${year}-W${String(weekNo).padStart(2,'0')}`;
+    return weekStr;
+  };
+  const [selectedWeek, setSelectedWeek] = useState(getCurrentWeekString());
 
   // Update gauge values from real sensorData prop
   useEffect(() => {
@@ -212,13 +229,23 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
     const fetchWeeklyData = async () => {
       try {
         setWeeklyError("");
-        // Backend weekly mode returns 7 days centered on date
-        const today = new Date();
-        const weekStartDate = new Date(today);
-        weekStartDate.setDate(weekStartDate.getDate() - 2); // Start from 2 days before (Mon-ish)
-        const weekStartStr = weekStartDate.toISOString().split("T")[0];
-        
-        const response = await dataAPI.getHistory(motorId, "daily", weekStartStr);
+        // Convert selectedWeek (YYYY-Www) into a Monday date string YYYY-MM-DD
+        const weekParts = selectedWeek.split('-W');
+        let weekStartStr = null;
+        if (weekParts.length === 2) {
+          const y = parseInt(weekParts[0], 10);
+          const w = parseInt(weekParts[1], 10);
+          // ISO week to date: get Monday
+          const simple = new Date(Date.UTC(y, 0, 1 + (w - 1) * 7));
+          const dow = simple.getUTCDay();
+          const monday = new Date(simple);
+          const diff = (dow <= 4) ? (1 - dow) : (8 - dow);
+          monday.setUTCDate(simple.getUTCDate() + diff);
+          weekStartStr = monday.toISOString().split('T')[0];
+        }
+
+        // Prefer dedicated weekly-average endpoint if available
+        const response = await dataAPI.getWeeklyAverage(motorId, weekStartStr);
         const rows = Array.isArray(response.data)
           ? response.data
           : Array.isArray(response.data?.data)
@@ -226,8 +253,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
             : [];
 
         if (rows.length > 0) {
-          // Backend returns daily aggregates when requesting full week
-          // Use last 5 days (sen-jum = Mon-Fri)
+          // Backend returns daily aggregates for the week. Use last 5 business days (Mon-Fri)
           const recentData = rows.slice(-5);
           
           const formattedData = {
@@ -270,6 +296,105 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
     const interval = setInterval(fetchWeeklyData, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [motorId]);
+
+  // Re-fetch weekly when user changes selected week
+  useEffect(() => {
+    // trigger fetch by toggling motorId dependency via same effect above: simpler to call fetch here
+    const fetchWeekly = async () => {
+      try {
+        setWeeklyError("");
+        const weekParts = selectedWeek.split('-W');
+        let weekStartStr = null;
+        if (weekParts.length === 2) {
+          const y = parseInt(weekParts[0], 10);
+          const w = parseInt(weekParts[1], 10);
+          const simple = new Date(Date.UTC(y, 0, 1 + (w - 1) * 7));
+          const dow = simple.getUTCDay();
+          const monday = new Date(simple);
+          const diff = (dow <= 4) ? (1 - dow) : (8 - dow);
+          monday.setUTCDate(simple.getUTCDate() + diff);
+          weekStartStr = monday.toISOString().split('T')[0];
+        }
+        const response = await dataAPI.getWeeklyAverage(motorId, weekStartStr);
+        const rows = Array.isArray(response.data)
+          ? response.data
+          : Array.isArray(response.data?.data)
+            ? response.data.data
+            : [];
+        if (rows.length > 0) {
+          const recentData = rows.slice(-5);
+          const formattedData = {
+            noise: recentData.map((row, idx) => ({
+              name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
+              value: normalizeToPercentage(row.noise || 0, PARAMETER_CONFIGS.noise.max),
+            })),
+            temperature: recentData.map((row, idx) => ({
+              name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
+              value: normalizeToPercentage(row.temperature || 0, PARAMETER_CONFIGS.temperature.max),
+            })),
+            vibration: recentData.map((row, idx) => ({
+              name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
+              value: normalizeToPercentage(row.vibration || 0, PARAMETER_CONFIGS.vibration.max),
+            })),
+            power: recentData.map((row, idx) => ({
+              name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
+              value: normalizeToPercentage((row.power || 0) / 1000, PARAMETER_CONFIGS.power.max),
+            })),
+          };
+          setWeeklyData(formattedData);
+        } else {
+          setWeeklyData(generateWeeklyData());
+          setWeeklyError("Tidak ada data weekly average pada periode ini.");
+        }
+      } catch (error) {
+        console.error("Error fetching weekly data:", error.message);
+        setWeeklyData(generateWeeklyData());
+        const status = error?.response?.status;
+        if (status === 401 || status === 403) {
+          setWeeklyError("Akses weekly average ditolak (token tidak valid/expired). Silakan login ulang.");
+        } else {
+          setWeeklyError("Gagal mengambil weekly average dari server.");
+        }
+      }
+    };
+    fetchWeekly();
+  }, [selectedWeek, motorId]);
+
+  const weekStringToMondayDate = (weekStr) => {
+    const parts = weekStr.split('-W');
+    if (parts.length !== 2) return null;
+    const y = parseInt(parts[0], 10);
+    const w = parseInt(parts[1], 10);
+    const simple = new Date(Date.UTC(y, 0, 1 + (w - 1) * 7));
+    const dow = simple.getUTCDay();
+    const monday = new Date(simple);
+    const diff = (dow <= 4) ? (1 - dow) : (8 - dow);
+    monday.setUTCDate(simple.getUTCDate() + diff);
+    return monday.toISOString().split('T')[0];
+  };
+
+  const handleExportWeekly = async () => {
+    try {
+      const monday = weekStringToMondayDate(selectedWeek);
+      if (!monday) {
+        alert('Pilih minggu yang valid untuk export');
+        return;
+      }
+      const resp = await dataAPI.exportData(motorId, 'weekly', monday);
+      const blob = new Blob([resp.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `weekly-average-${monday}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Export weekly failed', err);
+      alert('Gagal export weekly.');
+    }
+  };
 
   const powerPhases = sensorData.powerPhases || { R: 0, S: 0, T: 0 };
 
@@ -515,16 +640,16 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
         <div className="section-header">
           <h2>Weekly Average</h2>
           <div className="controls">
-            {false && (
-              <label>
-                Bulan:
+              <label style={{ marginRight: 12 }}>
+                Pilih Minggu:
                 <input
-                  type="month"
-                  value={averageMonth}
-                  onChange={(e) => setAverageMonth(e.target.value)}
+                  type="week"
+                  value={selectedWeek}
+                  onChange={(e) => setSelectedWeek(e.target.value)}
+                  style={{ marginLeft: 8 }}
                 />
               </label>
-            )}
+              <button className="btn-export" onClick={handleExportWeekly}>Export Weekly Excel</button>
           </div>
         </div>
 
