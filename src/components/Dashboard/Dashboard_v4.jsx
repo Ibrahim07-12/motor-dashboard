@@ -173,7 +173,15 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
         }
       } catch (error) {
         console.error("Error fetching historical data:", error);
-        setHistoricalData([]);
+        // Generate fallback data for testing
+        const fallbackData = historicalTicks.map((time, idx) => ({
+          time: time,
+          vibration: normalizeToPercentage(Math.random() * 50, PARAMETER_CONFIGS.vibration.max),
+          temperature: normalizeToPercentage(25 + Math.random() * 30, PARAMETER_CONFIGS.temperature.max),
+          power: normalizeToPercentage(Math.random() * 18, PARAMETER_CONFIGS.power.max),
+          noise: normalizeToPercentage(40 + Math.random() * 60, PARAMETER_CONFIGS.noise.max),
+        }));
+        setHistoricalData(fallbackData);
       }
     };
     fetchHistoricalData();
@@ -247,11 +255,49 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
           };
           setWeeklyData(formattedData);
         } else {
-          setWeeklyData(generateWeeklyData());
+          // Fallback with sample data when all API calls fail
+          const fallbackData = {
+            noise: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
+              name: day,
+              value: normalizeToPercentage(40 + Math.random() * 80, PARAMETER_CONFIGS.noise.max),
+            })),
+            temperature: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
+              name: day,
+              value: normalizeToPercentage(20 + Math.random() * 40, PARAMETER_CONFIGS.temperature.max),
+            })),
+            vibration: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
+              name: day,
+              value: normalizeToPercentage(Math.random() * 60, PARAMETER_CONFIGS.vibration.max),
+            })),
+            power: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
+              name: day,
+              value: normalizeToPercentage(Math.random() * 20, PARAMETER_CONFIGS.power.max),
+            })),
+          };
+          setWeeklyData(fallbackData);
         }
       } catch (error) {
         console.error("Error fetching weekly data:", error);
-        setWeeklyData(generateWeeklyData());
+        // Fallback with sample data
+        const fallbackData = {
+          noise: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
+            name: day,
+            value: normalizeToPercentage(40 + Math.random() * 80, PARAMETER_CONFIGS.noise.max),
+          })),
+          temperature: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
+            name: day,
+            value: normalizeToPercentage(20 + Math.random() * 40, PARAMETER_CONFIGS.temperature.max),
+          })),
+          vibration: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
+            name: day,
+            value: normalizeToPercentage(Math.random() * 60, PARAMETER_CONFIGS.vibration.max),
+          })),
+          power: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
+            name: day,
+            value: normalizeToPercentage(Math.random() * 20, PARAMETER_CONFIGS.power.max),
+          })),
+        };
+        setWeeklyData(fallbackData);
       }
     };
     fetchWeeklyData();
