@@ -143,6 +143,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   // Weekly chart data
   const [weeklyData, setWeeklyData] = useState(generateWeeklyData);
   const [weeklyError, setWeeklyError] = useState("");
+  const weeklyLabels = ["sen", "sel", "rab", "kam", "jum"];
 
   // Date pickers
   const [historicalDate, setHistoricalDate] = useState(
@@ -289,34 +290,54 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
           : Array.isArray(response.data?.data)
             ? response.data.data
             : [];
+
+        const paddedRows = weeklyLabels.map((label, index) => {
+          const row = rows[index] || {};
+          return {
+            name: label,
+            noise: row.noise || 0,
+            temperature: row.temperature || 0,
+            vibration: row.vibration || 0,
+            power: row.power || 0,
+          };
+        });
         if (rows.length > 0) {
-          const recentData = rows.slice(-5);
           const formattedData = {
-            noise: recentData.map((row, idx) => ({
-              name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
+            noise: paddedRows.map((row, idx) => ({
+              name: weeklyLabels[idx] || `day${idx}`,
               value: normalizeToPercentage(row.noise || 0, PARAMETER_CONFIGS.noise.max),
             })),
-            temperature: recentData.map((row, idx) => ({
-              name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
+            temperature: paddedRows.map((row, idx) => ({
+              name: weeklyLabels[idx] || `day${idx}`,
               value: normalizeToPercentage(row.temperature || 0, PARAMETER_CONFIGS.temperature.max),
             })),
-            vibration: recentData.map((row, idx) => ({
-              name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
+            vibration: paddedRows.map((row, idx) => ({
+              name: weeklyLabels[idx] || `day${idx}`,
               value: normalizeToPercentage(row.vibration || 0, PARAMETER_CONFIGS.vibration.max),
             })),
-            power: recentData.map((row, idx) => ({
-              name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
+            power: paddedRows.map((row, idx) => ({
+              name: weeklyLabels[idx] || `day${idx}`,
               value: normalizeToPercentage((row.power || 0) / 1000, PARAMETER_CONFIGS.power.max),
             })),
           };
           setWeeklyData(formattedData);
         } else {
-          setWeeklyData(generateWeeklyData());
+          setWeeklyData({
+            noise: weeklyLabels.map((name) => ({ name, value: 0 })),
+            temperature: weeklyLabels.map((name) => ({ name, value: 0 })),
+            vibration: weeklyLabels.map((name) => ({ name, value: 0 })),
+            power: weeklyLabels.map((name) => ({ name, value: 0 })),
+          });
           setWeeklyError("Tidak ada data weekly average pada periode ini.");
         }
       } catch (error) {
         console.error("Error fetching weekly data:", error.message);
-        setWeeklyData(generateWeeklyData());
+        setWeeklyData({
+          noise: weeklyLabels.map((name) => ({ name, value: 0 })),
+          temperature: weeklyLabels.map((name) => ({ name, value: 0 })),
+          vibration: weeklyLabels.map((name) => ({ name, value: 0 })),
+          power: weeklyLabels.map((name) => ({ name, value: 0 })),
+        });
         const status = error?.response?.status;
         if (status === 401 || status === 403) {
           setWeeklyError("Akses weekly average ditolak (token tidak valid/expired). Silakan login ulang.");
@@ -551,7 +572,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
             <button className="btn-export" onClick={handleExportCsv}>Export Excel</button>
           </div>
         </div>
-        <ResponsiveContainer width="100%" height={170}>
+        <ResponsiveContainer width="100%" height={200}>
           <LineChart data={displayHistorical} margin={{ top: 8, right: 8, left: 44, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
             <XAxis
@@ -564,6 +585,8 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
               stroke="#9CA3AF"
               tick={{ fontSize: 10 }}
               tickFormatter={(value) => value}
+              height={44}
+              tickMargin={12}
             />
             <YAxis
               width={64}
@@ -641,8 +664,8 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                   tick={{ fontSize: 9 }}
                   angle={0}
                   textAnchor="middle"
-                  tickMargin={8}
-                  height={32}
+                    tickMargin={10}
+                    height={42}
                   tickFormatter={(value) => value}
                 />
                 <YAxis
@@ -685,8 +708,8 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                   tick={{ fontSize: 9 }}
                   angle={0}
                   textAnchor="middle"
-                  tickMargin={8}
-                  height={32}
+                    tickMargin={10}
+                    height={42}
                   tickFormatter={(value) => value}
                 />
                 <YAxis
@@ -729,8 +752,8 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                   tick={{ fontSize: 9 }}
                   angle={0}
                   textAnchor="middle"
-                  tickMargin={8}
-                  height={32}
+                    tickMargin={10}
+                    height={42}
                   tickFormatter={(value) => value}
                 />
                 <YAxis
@@ -773,8 +796,8 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                   tick={{ fontSize: 9 }}
                   angle={0}
                   textAnchor="middle"
-                  tickMargin={8}
-                  height={32}
+                    tickMargin={10}
+                    height={42}
                   tickFormatter={(value) => value}
                 />
                 <YAxis
