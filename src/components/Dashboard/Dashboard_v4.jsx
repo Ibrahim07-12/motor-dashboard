@@ -115,6 +115,8 @@ const generateHistoricalData = (hours = 24) => {
   return [];
 };
 
+const HISTORICAL_HOURS = Array.from({ length: 24 }, (_, hour) => `${String(hour).padStart(2, "0")}:00`);
+
 // Helper: Empty weekly data (real data only)
 const generateWeeklyData = () => {
   return {
@@ -178,28 +180,56 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
             : [];
 
         if (rows.length > 0) {
-          const formattedData = rows.map((row) => {
-            // Parse timestamp to extract hour
+          const byHour = new Map();
+          rows.forEach((row) => {
             const timestamp = new Date(row.timestamp || row.time);
-            const hour = String(timestamp.getHours()).padStart(2, '0');
-            const time = `${hour}:00`;
-            
-            return {
-              time: time,
+            if (Number.isNaN(timestamp.getTime())) {
+              return;
+            }
+
+            const hour = String(timestamp.getHours()).padStart(2, "0");
+            byHour.set(`${hour}:00`, {
+              time: `${hour}:00`,
               vibration: normalizeToPercentage(row.vibration || 0, PARAMETER_CONFIGS.vibration.max),
               temperature: normalizeToPercentage(row.temperature || 0, PARAMETER_CONFIGS.temperature.max),
-              power: normalizeToPercentage((row.power || 0) / 1000, PARAMETER_CONFIGS.power.max), // Convert watts to kW
+              power: normalizeToPercentage((row.power || 0) / 1000, PARAMETER_CONFIGS.power.max),
               noise: normalizeToPercentage(row.noise || 0, PARAMETER_CONFIGS.noise.max),
-            };
+            });
           });
+
+          const formattedData = HISTORICAL_HOURS.map((time) =>
+            byHour.get(time) || {
+              time,
+              vibration: 0,
+              temperature: 0,
+              power: 0,
+              noise: 0,
+            }
+          );
           setHistoricalData(formattedData);
         } else {
-          setHistoricalData([]);
+          setHistoricalData(
+            HISTORICAL_HOURS.map((time) => ({
+              time,
+              vibration: 0,
+              temperature: 0,
+              power: 0,
+              noise: 0,
+            }))
+          );
           setHistoricalError(`Tidak ada data historis untuk ${historicalDate}.`);
         }
       } catch (error) {
         console.error(`Error fetching historical data for ${historicalDate}:`, error.message);
-        setHistoricalData([]);
+        setHistoricalData(
+          HISTORICAL_HOURS.map((time) => ({
+            time,
+            vibration: 0,
+            temperature: 0,
+            power: 0,
+            noise: 0,
+          }))
+        );
         const status = error?.response?.status;
         if (status === 401 || status === 403) {
           setHistoricalError("Akses data historis ditolak (token tidak valid/expired). Silakan login ulang.");
@@ -489,7 +519,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   const currentData = weeklyData;
 
   // Tick definitions for chart axes
-  const historicalTicks = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "23:00"];
+  const historicalTicks = HISTORICAL_HOURS;
   const weeklyTicks = ["sen", "sel", "rab", "kam", "jum"];
 
   // Charts only display when real data exists - no dummy fallback
