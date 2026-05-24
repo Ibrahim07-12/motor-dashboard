@@ -29,11 +29,23 @@ const MonitoringPage = ({ user = {}, onLogout = () => {} }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Thresholds for warning notifications
-  const [thresholds, setThresholds] = useState({
-    temperature: 70, // °C
-    vibration: 25, // m/s²
-    noise: 85, // dB
-    power: { R: 8000, S: 8000, T: 8000 }, // W
+  const [thresholds, setThresholds] = useState(() => {
+    // Load from localStorage if available, otherwise use defaults
+    const saved = localStorage.getItem("motorThresholds");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Failed to parse saved thresholds:", e);
+      }
+    }
+    // Default thresholds
+    return {
+      temperature: 70, // °C
+      vibration: 25, // m/s²
+      noise: 85, // dB
+      power: { R: 8000, S: 8000, T: 8000 }, // W
+    };
   });
 
   // imbalance percent threshold (default 20%) - can be moved to settings later
@@ -70,8 +82,15 @@ const MonitoringPage = ({ user = {}, onLogout = () => {} }) => {
   };
 
   const handleSaveThresholds = async (newThresholds) => {
+    // Save to state
     setThresholds(newThresholds);
-    console.log("Saving thresholds:", newThresholds);
+    // Persist to localStorage
+    try {
+      localStorage.setItem("motorThresholds", JSON.stringify(newThresholds));
+      console.log("✓ Thresholds saved to localStorage:", newThresholds);
+    } catch (e) {
+      console.error("Failed to save thresholds to localStorage:", e);
+    }
   };
 
   // Real-time polling every 2 seconds
