@@ -131,10 +131,39 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   });
 
   // Historical chart data
-  const [historicalData, setHistoricalData] = useState(generateHistoricalData());
+  const [historicalData, setHistoricalData] = useState(() => {
+    // Initialize with sample data for testing
+    return ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "23:00"].map((time) => ({
+      time: time,
+      vibration: normalizeToPercentage(Math.random() * 50, PARAMETER_CONFIGS.vibration.max),
+      temperature: normalizeToPercentage(25 + Math.random() * 30, PARAMETER_CONFIGS.temperature.max),
+      power: normalizeToPercentage(Math.random() * 18, PARAMETER_CONFIGS.power.max),
+      noise: normalizeToPercentage(40 + Math.random() * 60, PARAMETER_CONFIGS.noise.max),
+    }));
+  });
 
   // Weekly chart data
-  const [weeklyData, setWeeklyData] = useState(generateWeeklyData());
+  const [weeklyData, setWeeklyData] = useState(() => {
+    // Initialize with sample data for testing
+    return {
+      noise: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
+        name: day,
+        value: normalizeToPercentage(40 + Math.random() * 80, PARAMETER_CONFIGS.noise.max),
+      })),
+      temperature: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
+        name: day,
+        value: normalizeToPercentage(20 + Math.random() * 40, PARAMETER_CONFIGS.temperature.max),
+      })),
+      vibration: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
+        name: day,
+        value: normalizeToPercentage(Math.random() * 60, PARAMETER_CONFIGS.vibration.max),
+      })),
+      power: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
+        name: day,
+        value: normalizeToPercentage(Math.random() * 20, PARAMETER_CONFIGS.power.max),
+      })),
+    };
+  });
 
   // Date pickers
   const [historicalDate, setHistoricalDate] = useState(
