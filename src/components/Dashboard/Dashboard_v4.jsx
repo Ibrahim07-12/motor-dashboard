@@ -183,24 +183,66 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   useEffect(() => {
     const fetchWeeklyData = async () => {
       try {
-        const response = await dataAPI.getWeeklyAverage(motorId, new Date().toISOString().split("T")[0]);
-        if (response.data && response.data.length > 0) {
+        // Get the last 7 days of daily history to calculate weekly average
+        const today = new Date();
+        const dailyAverages = [];
+        
+        for (let i = 4; i >= 0; i--) {
+          const date = new Date(today);
+          date.setDate(date.getDate() - i);
+          const dateStr = date.toISOString().split("T")[0];
+          
+          try {
+            const response = await dataAPI.getHistory(motorId, "daily", dateStr);
+            if (response.data && response.data.length > 0) {
+              // Calculate average for the day
+              const avgVibration = response.data.reduce((sum, d) => sum + (d.vibration || 0), 0) / response.data.length;
+              const avgTemp = response.data.reduce((sum, d) => sum + (d.temperature || 0), 0) / response.data.length;
+              const avgPower = response.data.reduce((sum, d) => sum + (d.power || 0), 0) / response.data.length;
+              const avgNoise = response.data.reduce((sum, d) => sum + (d.noise || 0), 0) / response.data.length;
+              
+              dailyAverages.push({
+                vibration: avgVibration,
+                temperature: avgTemp,
+                power: avgPower,
+                noise: avgNoise,
+              });
+            } else {
+              dailyAverages.push({
+                vibration: 0,
+                temperature: 0,
+                power: 0,
+                noise: 0,
+              });
+            }
+          } catch (err) {
+            console.warn(`Failed to fetch daily data for ${dateStr}:`, err);
+            dailyAverages.push({
+              vibration: 0,
+              temperature: 0,
+              power: 0,
+              noise: 0,
+            });
+          }
+        }
+        
+        if (dailyAverages.length > 0) {
           const formattedData = {
-            noise: response.data.map((row, idx) => ({
+            noise: dailyAverages.map((row, idx) => ({
               name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
-              value: normalizeToPercentage(row.noise || 0, PARAMETER_CONFIGS.noise.max),
+              value: normalizeToPercentage(row.noise, PARAMETER_CONFIGS.noise.max),
             })),
-            temperature: response.data.map((row, idx) => ({
+            temperature: dailyAverages.map((row, idx) => ({
               name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
-              value: normalizeToPercentage(row.temperature || 0, PARAMETER_CONFIGS.temperature.max),
+              value: normalizeToPercentage(row.temperature, PARAMETER_CONFIGS.temperature.max),
             })),
-            vibration: response.data.map((row, idx) => ({
+            vibration: dailyAverages.map((row, idx) => ({
               name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
-              value: normalizeToPercentage(row.vibration || 0, PARAMETER_CONFIGS.vibration.max),
+              value: normalizeToPercentage(row.vibration, PARAMETER_CONFIGS.vibration.max),
             })),
-            power: response.data.map((row, idx) => ({
+            power: dailyAverages.map((row, idx) => ({
               name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
-              value: normalizeToPercentage(row.power || 0, PARAMETER_CONFIGS.power.max),
+              value: normalizeToPercentage(row.power, PARAMETER_CONFIGS.power.max),
             })),
           };
           setWeeklyData(formattedData);
