@@ -56,11 +56,12 @@ export const dataAPI = {
     api.get(`/data/history?motorId=${motorId}&mode=${mode}&date=${date}`),
   getWeeklyAverage: (motorId, date) =>
     api.get(`/data/weekly-average?motorId=${motorId}&date=${date}`),
-  getMonthlyAverage: (motorId, date) =>
-    api.get(`/data/monthly-average?motorId=${motorId}&date=${date}`),
+  // Monthly endpoint removed - 14-day TTL makes monthly not practical
+  // getMonthlyAverage: (motorId, date) =>
+  //   api.get(`/data/monthly-average?motorId=${motorId}&date=${date}`),
   exportData: (motorId, mode, date) =>
     api.get(
-      `/data/export?motorId=${motorId}&mode=${mode}&date=${date}`,
+      `/data/export?motorId=${motorId}&mode=${mode}&date=${date}&format=xlsx`,
       { responseType: "blob" },
     ),
 };

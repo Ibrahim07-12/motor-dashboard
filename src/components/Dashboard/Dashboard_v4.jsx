@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import * as XLSX from "xlsx";
 import {
   LineChart,
   Line,
@@ -134,8 +135,8 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   // Historical chart data
   const [historicalData, setHistoricalData] = useState(generateHistoricalData());
 
-  // Weekly/Monthly chart data
-  const [chartMode, setChartMode] = useState("weekly"); // "weekly" or "monthly"
+  // Weekly chart data (monthly removed - 14-day TTL makes monthly impractical)
+  const [chartMode, setChartMode] = useState("weekly");
   const [weeklyData, setWeeklyData] = useState(generateWeeklyData());
   const [monthlyData, setMonthlyData] = useState(generateMonthlyData());
 
@@ -258,7 +259,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
     );
   };
 
-  const currentData = chartMode === "weekly" ? weeklyData : monthlyData;
+  const currentData = weeklyData;
 
   // Tick definitions for chart axes
   const historicalTicks = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "23:00"];
@@ -270,10 +271,10 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   const displayHistorical = (historicalData && historicalData.length)
     ? historicalData
     : historicalTicks.map((t) => ({ time: t, vibration: 0, temperature: 0, power: 0, noise: 0 }));
-  const displayNoise = (currentData.noise && currentData.noise.length) ? currentData.noise : makeCategoryFallback(chartMode === "weekly" ? weeklyTicks : monthlyTicks);
-  const displayTemperature = (currentData.temperature && currentData.temperature.length) ? currentData.temperature : makeCategoryFallback(chartMode === "weekly" ? weeklyTicks : monthlyTicks);
-  const displayVibration = (currentData.vibration && currentData.vibration.length) ? currentData.vibration : makeCategoryFallback(chartMode === "weekly" ? weeklyTicks : monthlyTicks);
-  const displayPower = (currentData.power && currentData.power.length) ? currentData.power : makeCategoryFallback(chartMode === "weekly" ? weeklyTicks : monthlyTicks);
+  const displayNoise = (currentData.noise && currentData.noise.length) ? currentData.noise : makeCategoryFallback(weeklyTicks);
+  const displayTemperature = (currentData.temperature && currentData.temperature.length) ? currentData.temperature : makeCategoryFallback(weeklyTicks);
+  const displayVibration = (currentData.vibration && currentData.vibration.length) ? currentData.vibration : makeCategoryFallback(weeklyTicks);
+  const displayPower = (currentData.power && currentData.power.length) ? currentData.power : makeCategoryFallback(weeklyTicks);
 
   const formatTooltipLabel = (label) => {
     if (chartMode === "weekly") {
@@ -287,16 +288,18 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   };
 
   const handleExportCsv = () => {
-    const csvContent = buildHistoricalCsv(historicalDate, historicalData);
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const downloadUrl = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = downloadUrl;
-    link.download = `grafik-historis-${historicalDate}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(downloadUrl);
+    const rows = historicalData.map(row => ({
+      date: historicalDate,
+      time: row.time,
+      vibration: (Number(row.vibration) / 100) * PARAMETER_CONFIGS.vibration.max,
+      temperature: (Number(row.temperature) / 100) * PARAMETER_CONFIGS.temperature.max,
+      power: (Number(row.power) / 100) * PARAMETER_CONFIGS.power.max,
+      noise: (Number(row.noise) / 100) * PARAMETER_CONFIGS.noise.max,
+    }));
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+    XLSX.writeFile(workbook, `grafik-historis-${historicalDate}.xlsx`);
   };
 
   return (
@@ -331,7 +334,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                 onChange={(e) => setHistoricalDate(e.target.value)}
               />
             </label>
-            <button className="btn-export" onClick={handleExportCsv}>Export CSV</button>
+            <button className="btn-export" onClick={handleExportCsv}>Export Excel</button>
           </div>
         </div>
         <ResponsiveContainer width="100%" height={200}>
@@ -386,16 +389,12 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
         </ResponsiveContainer>
       </div>
 
-      {/* Weekly/Monthly Average Section */}
+      {/* Weekly Average Section */}
       <div className="average-section">
         <div className="section-header">
-          <h2>Weekly and Monthly Average</h2>
+          <h2>Weekly Average</h2>
           <div className="controls">
-            <select value={chartMode} onChange={(e) => setChartMode(e.target.value)}>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-            </select>
-            {chartMode === "monthly" && (
+            {false && (
               <label>
                 Bulan:
                 <input
