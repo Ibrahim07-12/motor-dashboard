@@ -188,29 +188,28 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
     const fetchHistoricalData = async () => {
       try {
         const response = await dataAPI.getHistory(motorId, "daily", historicalDate);
-        if (response.data && response.data.length > 0) {
-          const formattedData = response.data.map((row) => ({
-            time: row.time || row.hour || "00:00",
-            vibration: normalizeToPercentage(row.vibration || 0, PARAMETER_CONFIGS.vibration.max),
-            temperature: normalizeToPercentage(row.temperature || 0, PARAMETER_CONFIGS.temperature.max),
-            power: normalizeToPercentage(row.power || 0, PARAMETER_CONFIGS.power.max),
-            noise: normalizeToPercentage(row.noise || 0, PARAMETER_CONFIGS.noise.max),
-          }));
+        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+          const formattedData = response.data.map((row) => {
+            // Parse timestamp to extract hour
+            const timestamp = new Date(row.timestamp || row.time);
+            const hour = String(timestamp.getHours()).padStart(2, '0');
+            const time = `${hour}:00`;
+            
+            return {
+              time: time,
+              vibration: normalizeToPercentage(row.vibration || 0, PARAMETER_CONFIGS.vibration.max),
+              temperature: normalizeToPercentage(row.temperature || 0, PARAMETER_CONFIGS.temperature.max),
+              power: normalizeToPercentage((row.power || 0) / 1000, PARAMETER_CONFIGS.power.max), // Convert watts to kW
+              noise: normalizeToPercentage(row.noise || 0, PARAMETER_CONFIGS.noise.max),
+            };
+          });
           setHistoricalData(formattedData);
         } else {
           setHistoricalData([]);
         }
       } catch (error) {
         console.error("Error fetching historical data:", error);
-        // Generate fallback data for testing
-        const fallbackData = historicalTicks.map((time, idx) => ({
-          time: time,
-          vibration: normalizeToPercentage(Math.random() * 50, PARAMETER_CONFIGS.vibration.max),
-          temperature: normalizeToPercentage(25 + Math.random() * 30, PARAMETER_CONFIGS.temperature.max),
-          power: normalizeToPercentage(Math.random() * 18, PARAMETER_CONFIGS.power.max),
-          noise: normalizeToPercentage(40 + Math.random() * 60, PARAMETER_CONFIGS.noise.max),
-        }));
-        setHistoricalData(fallbackData);
+        setHistoricalData([]);
       }
     };
     fetchHistoricalData();
@@ -220,113 +219,43 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   useEffect(() => {
     const fetchWeeklyData = async () => {
       try {
-        // Get the last 7 days of daily history to calculate weekly average
+        // Backend weekly mode returns 7 days centered on date
         const today = new Date();
-        const dailyAverages = [];
+        const weekStartDate = new Date(today);
+        weekStartDate.setDate(weekStartDate.getDate() - 2); // Start from 2 days before (Mon-ish)
+        const weekStartStr = weekStartDate.toISOString().split("T")[0];
         
-        for (let i = 4; i >= 0; i--) {
-          const date = new Date(today);
-          date.setDate(date.getDate() - i);
-          const dateStr = date.toISOString().split("T")[0];
+        const response = await dataAPI.getHistory(motorId, "daily", weekStartStr);
+        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+          // Backend returns daily aggregates when requesting full week
+          // Use last 5 days (sen-jum = Mon-Fri)
+          const recentData = response.data.slice(-5);
           
-          try {
-            const response = await dataAPI.getHistory(motorId, "daily", dateStr);
-            if (response.data && response.data.length > 0) {
-              // Calculate average for the day
-              const avgVibration = response.data.reduce((sum, d) => sum + (d.vibration || 0), 0) / response.data.length;
-              const avgTemp = response.data.reduce((sum, d) => sum + (d.temperature || 0), 0) / response.data.length;
-              const avgPower = response.data.reduce((sum, d) => sum + (d.power || 0), 0) / response.data.length;
-              const avgNoise = response.data.reduce((sum, d) => sum + (d.noise || 0), 0) / response.data.length;
-              
-              dailyAverages.push({
-                vibration: avgVibration,
-                temperature: avgTemp,
-                power: avgPower,
-                noise: avgNoise,
-              });
-            } else {
-              dailyAverages.push({
-                vibration: 0,
-                temperature: 0,
-                power: 0,
-                noise: 0,
-              });
-            }
-          } catch (err) {
-            console.warn(`Failed to fetch daily data for ${dateStr}:`, err);
-            dailyAverages.push({
-              vibration: 0,
-              temperature: 0,
-              power: 0,
-              noise: 0,
-            });
-          }
-        }
-        
-        if (dailyAverages.length > 0) {
           const formattedData = {
-            noise: dailyAverages.map((row, idx) => ({
+            noise: recentData.map((row, idx) => ({
               name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
-              value: normalizeToPercentage(row.noise, PARAMETER_CONFIGS.noise.max),
+              value: normalizeToPercentage(row.noise || 0, PARAMETER_CONFIGS.noise.max),
             })),
-            temperature: dailyAverages.map((row, idx) => ({
+            temperature: recentData.map((row, idx) => ({
               name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
-              value: normalizeToPercentage(row.temperature, PARAMETER_CONFIGS.temperature.max),
+              value: normalizeToPercentage(row.temperature || 0, PARAMETER_CONFIGS.temperature.max),
             })),
-            vibration: dailyAverages.map((row, idx) => ({
+            vibration: recentData.map((row, idx) => ({
               name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
-              value: normalizeToPercentage(row.vibration, PARAMETER_CONFIGS.vibration.max),
+              value: normalizeToPercentage(row.vibration || 0, PARAMETER_CONFIGS.vibration.max),
             })),
-            power: dailyAverages.map((row, idx) => ({
+            power: recentData.map((row, idx) => ({
               name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
-              value: normalizeToPercentage(row.power, PARAMETER_CONFIGS.power.max),
+              value: normalizeToPercentage((row.power || 0) / 1000, PARAMETER_CONFIGS.power.max), // Convert watts to kW
             })),
           };
           setWeeklyData(formattedData);
         } else {
-          // Fallback with sample data when all API calls fail
-          const fallbackData = {
-            noise: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
-              name: day,
-              value: normalizeToPercentage(40 + Math.random() * 80, PARAMETER_CONFIGS.noise.max),
-            })),
-            temperature: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
-              name: day,
-              value: normalizeToPercentage(20 + Math.random() * 40, PARAMETER_CONFIGS.temperature.max),
-            })),
-            vibration: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
-              name: day,
-              value: normalizeToPercentage(Math.random() * 60, PARAMETER_CONFIGS.vibration.max),
-            })),
-            power: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
-              name: day,
-              value: normalizeToPercentage(Math.random() * 20, PARAMETER_CONFIGS.power.max),
-            })),
-          };
-          setWeeklyData(fallbackData);
+          setWeeklyData(generateWeeklyData());
         }
       } catch (error) {
         console.error("Error fetching weekly data:", error);
-        // Fallback with sample data
-        const fallbackData = {
-          noise: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
-            name: day,
-            value: normalizeToPercentage(40 + Math.random() * 80, PARAMETER_CONFIGS.noise.max),
-          })),
-          temperature: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
-            name: day,
-            value: normalizeToPercentage(20 + Math.random() * 40, PARAMETER_CONFIGS.temperature.max),
-          })),
-          vibration: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
-            name: day,
-            value: normalizeToPercentage(Math.random() * 60, PARAMETER_CONFIGS.vibration.max),
-          })),
-          power: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
-            name: day,
-            value: normalizeToPercentage(Math.random() * 20, PARAMETER_CONFIGS.power.max),
-          })),
-        };
-        setWeeklyData(fallbackData);
+        setWeeklyData(generateWeeklyData());
       }
     };
     fetchWeeklyData();
@@ -460,7 +389,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
 
   const handleExportCsv = () => {
     if (!historicalData || historicalData.length === 0) {
-      alert("Tidak ada data untuk di-export. Pastikan sudah memilih tanggal dengan data tersedia.");
+      alert("Data tidak tersedia untuk di-export. Pilih tanggal dengan data yang ada.");
       return;
     }
     
@@ -477,7 +406,6 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
     const worksheet = XLSX.utils.json_to_sheet(rows);
     
     // Auto-size columns
-    const maxWidth = 20;
     const colWidths = [
       { wch: 12 }, // Date
       { wch: 10 }, // Time
