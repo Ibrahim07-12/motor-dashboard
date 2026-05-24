@@ -559,8 +559,11 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
               type="category"
               allowDuplicatedCategory={false}
               ticks={historicalTicks}
+              interval={0}
+              minTickGap={0}
               stroke="#9CA3AF"
               tick={{ fontSize: 10 }}
+              tickFormatter={(value) => value}
             />
             <YAxis
               width={64}
@@ -608,15 +611,11 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
         <div className="section-header">
           <h2>Weekly Average</h2>
           <div className="controls">
-              <label style={{ marginRight: 12 }}>
-                Pilih Minggu (klik tanggal untuk pilih minggu):
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  style={{ marginLeft: 8 }}
-                />
-              </label>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+              />
               <button className="btn-export" onClick={handleExportWeekly}>Export Excel</button>
           </div>
         </div>
@@ -636,12 +635,15 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                   type="category"
                   allowDuplicatedCategory={false}
                   ticks={weeklyTicks}
+                  interval={0}
+                  minTickGap={0}
                   stroke="#9CA3AF" 
                   tick={{ fontSize: 9 }}
                   angle={0}
                   textAnchor="middle"
                   tickMargin={8}
                   height={32}
+                  tickFormatter={(value) => value}
                 />
                 <YAxis
                   ticks={PARAMETER_CONFIGS.noise.yAxisTicks}
@@ -658,7 +660,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                   labelFormatter={formatTooltipLabel}
                 />
                 <Bar dataKey="value" fill={PARAMETER_CONFIGS.noise.color}>
-                  <LabelList dataKey="value" position="top" formatter={(v) => `${((v/100)*PARAMETER_CONFIGS.noise.max).toFixed(1)} ${PARAMETER_CONFIGS.noise.unit}`} />
+                  <LabelList dataKey="value" position="top" fill="#374151" style={{ fontSize: 10, fontWeight: 600 }} formatter={(v) => `${((v/100)*PARAMETER_CONFIGS.noise.max).toFixed(1)} ${PARAMETER_CONFIGS.noise.unit}`} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -677,12 +679,15 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                   type="category"
                   allowDuplicatedCategory={false}
                   ticks={weeklyTicks}
+                  interval={0}
+                  minTickGap={0}
                   stroke="#9CA3AF" 
                   tick={{ fontSize: 9 }}
                   angle={0}
                   textAnchor="middle"
                   tickMargin={8}
                   height={32}
+                  tickFormatter={(value) => value}
                 />
                 <YAxis
                   ticks={PARAMETER_CONFIGS.temperature.yAxisTicks}
@@ -699,7 +704,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                   labelFormatter={formatTooltipLabel}
                 />
                 <Bar dataKey="value" fill={PARAMETER_CONFIGS.temperature.color}>
-                  <LabelList dataKey="value" position="top" formatter={(v) => `${((v/100)*PARAMETER_CONFIGS.temperature.max).toFixed(1)} ${PARAMETER_CONFIGS.temperature.unit}`} />
+                  <LabelList dataKey="value" position="top" fill="#374151" style={{ fontSize: 10, fontWeight: 600 }} formatter={(v) => `${((v/100)*PARAMETER_CONFIGS.temperature.max).toFixed(1)} ${PARAMETER_CONFIGS.temperature.unit}`} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -718,12 +723,15 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                   type="category"
                   allowDuplicatedCategory={false}
                   ticks={weeklyTicks}
+                  interval={0}
+                  minTickGap={0}
                   stroke="#9CA3AF" 
                   tick={{ fontSize: 9 }}
                   angle={0}
                   textAnchor="middle"
                   tickMargin={8}
                   height={32}
+                  tickFormatter={(value) => value}
                 />
                 <YAxis
                   ticks={PARAMETER_CONFIGS.vibration.yAxisTicks}
@@ -740,7 +748,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                   labelFormatter={formatTooltipLabel}
                 />
                 <Bar dataKey="value" fill={PARAMETER_CONFIGS.vibration.color}>
-                  <LabelList dataKey="value" position="top" formatter={(v) => `${((v/100)*PARAMETER_CONFIGS.vibration.max).toFixed(1)} ${PARAMETER_CONFIGS.vibration.unit}`} />
+                  <LabelList dataKey="value" position="top" fill="#374151" style={{ fontSize: 10, fontWeight: 600 }} formatter={(v) => `${((v/100)*PARAMETER_CONFIGS.vibration.max).toFixed(1)} ${PARAMETER_CONFIGS.vibration.unit}`} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -759,12 +767,15 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                   type="category"
                   allowDuplicatedCategory={false}
                   ticks={weeklyTicks}
+                  interval={0}
+                  minTickGap={0}
                   stroke="#9CA3AF" 
                   tick={{ fontSize: 9 }}
                   angle={0}
                   textAnchor="middle"
                   tickMargin={8}
                   height={32}
+                  tickFormatter={(value) => value}
                 />
                 <YAxis
                   ticks={PARAMETER_CONFIGS.power.yAxisTicks}
@@ -781,7 +792,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                   labelFormatter={formatTooltipLabel}
                 />
                 <Bar dataKey="value" fill={PARAMETER_CONFIGS.power.color}>
-                  <LabelList dataKey="value" position="top" formatter={(v) => `${((v/100)*PARAMETER_CONFIGS.power.max).toFixed(1)} ${PARAMETER_CONFIGS.power.unit}`} />
+                  <LabelList dataKey="value" position="top" fill="#374151" style={{ fontSize: 10, fontWeight: 600 }} formatter={(v) => `${((v/100)*PARAMETER_CONFIGS.power.max).toFixed(1)} ${PARAMETER_CONFIGS.power.unit}`} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
