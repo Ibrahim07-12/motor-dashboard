@@ -109,36 +109,18 @@ const normalizeToPercentage = (value, max) => {
   return Math.min((value / max) * 100, 100);
 };
 
-// Helper: Generate historical data with sample fallback data
+// Helper: Empty historical data (real data only)
 const generateHistoricalData = (hours = 24) => {
-  return ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "23:00"].map((time) => ({
-    time: time,
-    vibration: normalizeToPercentage(20 + Math.random() * 30, PARAMETER_CONFIGS.vibration.max),
-    temperature: normalizeToPercentage(25 + Math.random() * 30, PARAMETER_CONFIGS.temperature.max),
-    power: normalizeToPercentage(5 + Math.random() * 12, PARAMETER_CONFIGS.power.max),
-    noise: normalizeToPercentage(50 + Math.random() * 50, PARAMETER_CONFIGS.noise.max),
-  }));
+  return [];
 };
 
-// Helper: Generate weekly data with sample fallback data
+// Helper: Empty weekly data (real data only)
 const generateWeeklyData = () => {
   return {
-    noise: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
-      name: day,
-      value: normalizeToPercentage(50 + Math.random() * 60, PARAMETER_CONFIGS.noise.max),
-    })),
-    temperature: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
-      name: day,
-      value: normalizeToPercentage(25 + Math.random() * 35, PARAMETER_CONFIGS.temperature.max),
-    })),
-    vibration: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
-      name: day,
-      value: normalizeToPercentage(10 + Math.random() * 40, PARAMETER_CONFIGS.vibration.max),
-    })),
-    power: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
-      name: day,
-      value: normalizeToPercentage(5 + Math.random() * 15, PARAMETER_CONFIGS.power.max),
-    })),
+    noise: [],
+    temperature: [],
+    vibration: [],
+    power: [],
   };
 };
 
@@ -154,39 +136,12 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   });
 
   // Historical chart data
-  const [historicalData, setHistoricalData] = useState(() => {
-    // Initialize with sample data for testing
-    return ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "23:00"].map((time) => ({
-      time: time,
-      vibration: normalizeToPercentage(Math.random() * 50, PARAMETER_CONFIGS.vibration.max),
-      temperature: normalizeToPercentage(25 + Math.random() * 30, PARAMETER_CONFIGS.temperature.max),
-      power: normalizeToPercentage(Math.random() * 18, PARAMETER_CONFIGS.power.max),
-      noise: normalizeToPercentage(40 + Math.random() * 60, PARAMETER_CONFIGS.noise.max),
-    }));
-  });
+  const [historicalData, setHistoricalData] = useState(generateHistoricalData);
+  const [historicalError, setHistoricalError] = useState("");
 
   // Weekly chart data
-  const [weeklyData, setWeeklyData] = useState(() => {
-    // Initialize with sample data for testing
-    return {
-      noise: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
-        name: day,
-        value: normalizeToPercentage(40 + Math.random() * 80, PARAMETER_CONFIGS.noise.max),
-      })),
-      temperature: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
-        name: day,
-        value: normalizeToPercentage(20 + Math.random() * 40, PARAMETER_CONFIGS.temperature.max),
-      })),
-      vibration: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
-        name: day,
-        value: normalizeToPercentage(Math.random() * 60, PARAMETER_CONFIGS.vibration.max),
-      })),
-      power: ["sen", "sel", "rab", "kam", "jum"].map((day) => ({
-        name: day,
-        value: normalizeToPercentage(Math.random() * 20, PARAMETER_CONFIGS.power.max),
-      })),
-    };
-  });
+  const [weeklyData, setWeeklyData] = useState(generateWeeklyData);
+  const [weeklyError, setWeeklyError] = useState("");
 
   // Date pickers
   const [historicalDate, setHistoricalDate] = useState(
@@ -210,9 +165,16 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   useEffect(() => {
     const fetchHistoricalData = async () => {
       try {
+        setHistoricalError("");
         const response = await dataAPI.getHistory(motorId, "daily", historicalDate);
-        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-          const formattedData = response.data.map((row) => {
+        const rows = Array.isArray(response.data)
+          ? response.data
+          : Array.isArray(response.data?.data)
+            ? response.data.data
+            : [];
+
+        if (rows.length > 0) {
+          const formattedData = rows.map((row) => {
             // Parse timestamp to extract hour
             const timestamp = new Date(row.timestamp || row.time);
             const hour = String(timestamp.getHours()).padStart(2, '0');
@@ -228,14 +190,18 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
           });
           setHistoricalData(formattedData);
         } else {
-          // No data found for this date - show sample data as fallback
-          console.warn(`No historical data found for ${historicalDate} - showing sample data`);
-          setHistoricalData(generateHistoricalData());
+          setHistoricalData([]);
+          setHistoricalError(`Tidak ada data historis untuk ${historicalDate}.`);
         }
       } catch (error) {
         console.error(`Error fetching historical data for ${historicalDate}:`, error.message);
-        // On error, keep sample data as fallback (don't clear to empty array)
-        setHistoricalData(generateHistoricalData());
+        setHistoricalData([]);
+        const status = error?.response?.status;
+        if (status === 401 || status === 403) {
+          setHistoricalError("Akses data historis ditolak (token tidak valid/expired). Silakan login ulang.");
+        } else {
+          setHistoricalError("Gagal mengambil data historis dari server.");
+        }
       }
     };
     fetchHistoricalData();
@@ -245,6 +211,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   useEffect(() => {
     const fetchWeeklyData = async () => {
       try {
+        setWeeklyError("");
         // Backend weekly mode returns 7 days centered on date
         const today = new Date();
         const weekStartDate = new Date(today);
@@ -252,10 +219,16 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
         const weekStartStr = weekStartDate.toISOString().split("T")[0];
         
         const response = await dataAPI.getHistory(motorId, "daily", weekStartStr);
-        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+        const rows = Array.isArray(response.data)
+          ? response.data
+          : Array.isArray(response.data?.data)
+            ? response.data.data
+            : [];
+
+        if (rows.length > 0) {
           // Backend returns daily aggregates when requesting full week
           // Use last 5 days (sen-jum = Mon-Fri)
-          const recentData = response.data.slice(-5);
+          const recentData = rows.slice(-5);
           
           const formattedData = {
             noise: recentData.map((row, idx) => ({
@@ -277,14 +250,18 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
           };
           setWeeklyData(formattedData);
         } else {
-          // No data found - show sample data as fallback
-          console.warn(`No weekly data found - showing sample data`);
           setWeeklyData(generateWeeklyData());
+          setWeeklyError("Tidak ada data weekly average pada periode ini.");
         }
       } catch (error) {
         console.error("Error fetching weekly data:", error.message);
-        // On error, keep sample data as fallback (don't clear to empty arrays)
         setWeeklyData(generateWeeklyData());
+        const status = error?.response?.status;
+        if (status === 401 || status === 403) {
+          setWeeklyError("Akses weekly average ditolak (token tidak valid/expired). Silakan login ulang.");
+        } else {
+          setWeeklyError("Gagal mengambil weekly average dari server.");
+        }
       }
     };
     fetchWeeklyData();
@@ -401,15 +378,12 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   const historicalTicks = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "23:00"];
   const weeklyTicks = ["sen", "sel", "rab", "kam", "jum"];
 
-  // Provide fallback display data when datasets are empty so axes/ticks render
-  const makeCategoryFallback = (ticks) => ticks.map((n) => ({ name: n, value: 0 }));
-  const displayHistorical = (historicalData && historicalData.length)
-    ? historicalData
-    : historicalTicks.map((t) => ({ time: t, vibration: 0, temperature: 0, power: 0, noise: 0 }));
-  const displayNoise = (currentData.noise && currentData.noise.length) ? currentData.noise : makeCategoryFallback(weeklyTicks);
-  const displayTemperature = (currentData.temperature && currentData.temperature.length) ? currentData.temperature : makeCategoryFallback(weeklyTicks);
-  const displayVibration = (currentData.vibration && currentData.vibration.length) ? currentData.vibration : makeCategoryFallback(weeklyTicks);
-  const displayPower = (currentData.power && currentData.power.length) ? currentData.power : makeCategoryFallback(weeklyTicks);
+  // Charts only display when real data exists - no dummy fallback
+  const displayHistorical = (historicalData && historicalData.length) ? historicalData : [];
+  const displayNoise = (currentData.noise && currentData.noise.length) ? currentData.noise : [];
+  const displayTemperature = (currentData.temperature && currentData.temperature.length) ? currentData.temperature : [];
+  const displayVibration = (currentData.vibration && currentData.vibration.length) ? currentData.vibration : [];
+  const displayPower = (currentData.power && currentData.power.length) ? currentData.power : [];
 
   const formatTooltipLabel = (label) => {
     const map = { sen: "Senin", sel: "Selasa", rab: "Rabu", kam: "Kamis", jum: "Jumat" };
