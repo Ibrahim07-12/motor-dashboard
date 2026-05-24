@@ -551,7 +551,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
             <button className="btn-export" onClick={handleExportCsv}>Export Excel</button>
           </div>
         </div>
-        <ResponsiveContainer width="100%" height={200}>
+        <ResponsiveContainer width="100%" height={170}>
           <LineChart data={displayHistorical} margin={{ top: 8, right: 8, left: 44, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
             <XAxis
