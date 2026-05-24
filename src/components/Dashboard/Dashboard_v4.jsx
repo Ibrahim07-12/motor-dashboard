@@ -118,10 +118,7 @@ const generateWeeklyData = () => {
   return { noise: [], temperature: [], vibration: [], power: [] };
 };
 
-// Helper: Generate monthly data (empty by default)
-const generateMonthlyData = () => {
-  return { noise: [], temperature: [], vibration: [], power: [] };
-};
+
 
 const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", thresholds = {} }) => {
   // Real-time gauge values - update from sensorData prop
@@ -135,10 +132,8 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   // Historical chart data
   const [historicalData, setHistoricalData] = useState(generateHistoricalData());
 
-  // Weekly chart data (monthly removed - 14-day TTL makes monthly impractical)
-  const [chartMode, setChartMode] = useState("weekly");
+  // Weekly chart data
   const [weeklyData, setWeeklyData] = useState(generateWeeklyData());
-  const [monthlyData, setMonthlyData] = useState(generateMonthlyData());
 
   // Date pickers
   const [historicalDate, setHistoricalDate] = useState(
@@ -264,7 +259,6 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   // Tick definitions for chart axes
   const historicalTicks = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "23:00"];
   const weeklyTicks = ["sen", "sel", "rab", "kam", "jum"];
-  const monthlyTicks = ["1", "5", "10", "15", "20", "25", "30"];
 
   // Provide fallback display data when datasets are empty so axes/ticks render
   const makeCategoryFallback = (ticks) => ticks.map((n) => ({ name: n, value: 0 }));
@@ -277,14 +271,8 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   const displayPower = (currentData.power && currentData.power.length) ? currentData.power : makeCategoryFallback(weeklyTicks);
 
   const formatTooltipLabel = (label) => {
-    if (chartMode === "weekly") {
-      const map = { sen: "Senin", sel: "Selasa", rab: "Rabu", kam: "Kamis", jum: "Jumat" };
-      return map[label] || label;
-    }
-    if (chartMode === "monthly") {
-      return `Hari ke -${label}`;
-    }
-    return label;
+    const map = { sen: "Senin", sel: "Selasa", rab: "Rabu", kam: "Kamis", jum: "Jumat" };
+    return map[label] || label;
   };
 
   const handleExportCsv = () => {
@@ -421,7 +409,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                   dataKey="name" 
                   type="category"
                   allowDuplicatedCategory={false}
-                  ticks={chartMode === "weekly" ? weeklyTicks : monthlyTicks}
+                  ticks={weeklyTicks}
                   stroke="#9CA3AF" 
                   tick={{ fontSize: 9 }}
                   angle={0}
@@ -460,7 +448,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                   dataKey="name" 
                   type="category"
                   allowDuplicatedCategory={false}
-                  ticks={chartMode === "weekly" ? weeklyTicks : monthlyTicks}
+                  ticks={weeklyTicks}
                   stroke="#9CA3AF" 
                   tick={{ fontSize: 9 }}
                   angle={0}
@@ -499,7 +487,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                   dataKey="name" 
                   type="category"
                   allowDuplicatedCategory={false}
-                  ticks={chartMode === "weekly" ? weeklyTicks : monthlyTicks}
+                  ticks={weeklyTicks}
                   stroke="#9CA3AF" 
                   tick={{ fontSize: 9 }}
                   angle={0}
@@ -538,7 +526,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                   dataKey="name" 
                   type="category"
                   allowDuplicatedCategory={false}
-                  ticks={chartMode === "weekly" ? weeklyTicks : monthlyTicks}
+                  ticks={weeklyTicks}
                   stroke="#9CA3AF" 
                   tick={{ fontSize: 9 }}
                   angle={0}
