@@ -241,69 +241,6 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
     fetchHistoricalData();
   }, [historicalDate, motorId]);
 
-  // Fetch weekly average data on mount and daily
-  useEffect(() => {
-    const fetchWeeklyData = async () => {
-      try {
-        setWeeklyError("");
-        // Convert selectedDate (calendar date) into the Monday date string YYYY-MM-DD for the week
-        const sel = new Date(selectedDate);
-        const day = sel.getDay();
-        const diff = sel.getDate() - day + (day === 0 ? -6 : 1); // adjust to Monday
-        const monday = new Date(sel.setDate(diff));
-        const weekStartStr = monday.toISOString().split('T')[0];
-        const response = await dataAPI.getWeeklyAverage(motorId, weekStartStr);
-        const rows = Array.isArray(response.data)
-          ? response.data
-          : Array.isArray(response.data?.data)
-            ? response.data.data
-            : [];
-
-        if (rows.length > 0) {
-          // Backend returns daily aggregates for the week. Use last 5 business days (Mon-Fri)
-          const recentData = rows.slice(-5);
-          
-          const formattedData = {
-            noise: recentData.map((row, idx) => ({
-              name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
-              value: normalizeToPercentage(row.noise || 0, PARAMETER_CONFIGS.noise.max),
-            })),
-            temperature: recentData.map((row, idx) => ({
-              name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
-              value: normalizeToPercentage(row.temperature || 0, PARAMETER_CONFIGS.temperature.max),
-            })),
-            vibration: recentData.map((row, idx) => ({
-              name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
-              value: normalizeToPercentage(row.vibration || 0, PARAMETER_CONFIGS.vibration.max),
-            })),
-            power: recentData.map((row, idx) => ({
-              name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
-              value: normalizeToPercentage((row.power || 0) / 1000, PARAMETER_CONFIGS.power.max), // Convert watts to kW
-            })),
-          };
-          setWeeklyData(formattedData);
-        } else {
-          setWeeklyData(generateWeeklyData());
-          setWeeklyError("Tidak ada data weekly average pada periode ini.");
-        }
-      } catch (error) {
-        console.error("Error fetching weekly data:", error.message);
-        setWeeklyData(generateWeeklyData());
-        const status = error?.response?.status;
-        if (status === 401 || status === 403) {
-          setWeeklyError("Akses weekly average ditolak (token tidak valid/expired). Silakan login ulang.");
-        } else {
-          setWeeklyError("Gagal mengambil weekly average dari server.");
-        }
-      }
-    };
-    fetchWeeklyData();
-    
-    // Refresh weekly data every 5 minutes
-    const interval = setInterval(fetchWeeklyData, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [motorId, selectedDate]);
-
   // Re-fetch weekly when user changes selected date
   useEffect(() => {
     const fetchWeekly = async () => {
