@@ -12,6 +12,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { dataAPI } from "../../services/api";
 import "./Dashboard_v4.css";
 
 const formatValueWithUnit = (value, unit) => `${Number(value).toFixed(1)} ${unit}`;
@@ -153,6 +154,71 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
     }
   }, [sensorData]);
 
+  // Fetch historical data when date changes
+  useEffect(() => {
+    const fetchHistoricalData = async () => {
+      try {
+        const response = await dataAPI.getHistory(motorId, "daily", historicalDate);
+        if (response.data && response.data.length > 0) {
+          const formattedData = response.data.map((row) => ({
+            time: row.time || row.hour || "00:00",
+            vibration: normalizeToPercentage(row.vibration || 0, PARAMETER_CONFIGS.vibration.max),
+            temperature: normalizeToPercentage(row.temperature || 0, PARAMETER_CONFIGS.temperature.max),
+            power: normalizeToPercentage(row.power || 0, PARAMETER_CONFIGS.power.max),
+            noise: normalizeToPercentage(row.noise || 0, PARAMETER_CONFIGS.noise.max),
+          }));
+          setHistoricalData(formattedData);
+        } else {
+          setHistoricalData([]);
+        }
+      } catch (error) {
+        console.error("Error fetching historical data:", error);
+        setHistoricalData([]);
+      }
+    };
+    fetchHistoricalData();
+  }, [historicalDate, motorId]);
+
+  // Fetch weekly average data on mount and daily
+  useEffect(() => {
+    const fetchWeeklyData = async () => {
+      try {
+        const response = await dataAPI.getWeeklyAverage(motorId, new Date().toISOString().split("T")[0]);
+        if (response.data && response.data.length > 0) {
+          const formattedData = {
+            noise: response.data.map((row, idx) => ({
+              name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
+              value: normalizeToPercentage(row.noise || 0, PARAMETER_CONFIGS.noise.max),
+            })),
+            temperature: response.data.map((row, idx) => ({
+              name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
+              value: normalizeToPercentage(row.temperature || 0, PARAMETER_CONFIGS.temperature.max),
+            })),
+            vibration: response.data.map((row, idx) => ({
+              name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
+              value: normalizeToPercentage(row.vibration || 0, PARAMETER_CONFIGS.vibration.max),
+            })),
+            power: response.data.map((row, idx) => ({
+              name: ["sen", "sel", "rab", "kam", "jum"][idx] || `day${idx}`,
+              value: normalizeToPercentage(row.power || 0, PARAMETER_CONFIGS.power.max),
+            })),
+          };
+          setWeeklyData(formattedData);
+        } else {
+          setWeeklyData(generateWeeklyData());
+        }
+      } catch (error) {
+        console.error("Error fetching weekly data:", error);
+        setWeeklyData(generateWeeklyData());
+      }
+    };
+    fetchWeeklyData();
+    
+    // Refresh weekly data every 5 minutes
+    const interval = setInterval(fetchWeeklyData, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [motorId]);
+
   const powerPhases = sensorData.powerPhases || { R: 0, S: 0, T: 0 };
 
   const renderMiniPhaseGauge = (phaseKey, value, phaseThresholdW, isUnbalanced = false) => {
@@ -276,17 +342,36 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   };
 
   const handleExportCsv = () => {
+    if (!historicalData || historicalData.length === 0) {
+      alert("Tidak ada data untuk di-export. Pastikan sudah memilih tanggal dengan data tersedia.");
+      return;
+    }
+    
     const rows = historicalData.map(row => ({
-      date: historicalDate,
-      time: row.time,
-      vibration: (Number(row.vibration) / 100) * PARAMETER_CONFIGS.vibration.max,
-      temperature: (Number(row.temperature) / 100) * PARAMETER_CONFIGS.temperature.max,
-      power: (Number(row.power) / 100) * PARAMETER_CONFIGS.power.max,
-      noise: (Number(row.noise) / 100) * PARAMETER_CONFIGS.noise.max,
+      Date: historicalDate,
+      Time: row.time || "00:00",
+      Vibration_ms2: ((Number(row.vibration) / 100) * PARAMETER_CONFIGS.vibration.max).toFixed(2),
+      Temperature_C: ((Number(row.temperature) / 100) * PARAMETER_CONFIGS.temperature.max).toFixed(2),
+      Power_kW: ((Number(row.power) / 100) * PARAMETER_CONFIGS.power.max).toFixed(2),
+      Noise_dB: ((Number(row.noise) / 100) * PARAMETER_CONFIGS.noise.max).toFixed(2),
     }));
+    
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(rows);
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+    
+    // Auto-size columns
+    const maxWidth = 20;
+    const colWidths = [
+      { wch: 12 }, // Date
+      { wch: 10 }, // Time
+      { wch: 16 }, // Vibration
+      { wch: 16 }, // Temperature
+      { wch: 12 }, // Power
+      { wch: 12 }, // Noise
+    ];
+    worksheet["!cols"] = colWidths;
+    
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Historis");
     XLSX.writeFile(workbook, `grafik-historis-${historicalDate}.xlsx`);
   };
 
