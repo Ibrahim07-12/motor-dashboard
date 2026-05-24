@@ -5,6 +5,7 @@ import {
   Line,
   BarChart,
   Bar,
+  LabelList,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -148,23 +149,8 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
     new Date().toISOString().split("T")[0]
   );
   const [averageMonth, setAverageMonth] = useState(new Date().toISOString().slice(0, 7));
-  // Week picker (HTML week input -> e.g. 2026-W21)
-  const getCurrentWeekString = () => {
-    const d = new Date();
-    // get Monday of current week
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-    const monday = new Date(d.setDate(diff));
-    const year = monday.getFullYear();
-    // compute week number (ISO week)
-    const tmp = new Date(Date.UTC(monday.getFullYear(), monday.getMonth(), monday.getDate()));
-    tmp.setUTCDate(tmp.getUTCDate() + 4 - (tmp.getUTCDay()||7));
-    const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(),0,1));
-    const weekNo = Math.ceil((((tmp - yearStart) / 86400000) + 1)/7);
-    const weekStr = `${year}-W${String(weekNo).padStart(2,'0')}`;
-    return weekStr;
-  };
-  const [selectedWeek, setSelectedWeek] = useState(getCurrentWeekString());
+  // Week selector as a calendar date (user picks any date within desired week)
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
 
   // Update gauge values from real sensorData prop
   useEffect(() => {
@@ -229,22 +215,12 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
     const fetchWeeklyData = async () => {
       try {
         setWeeklyError("");
-        // Convert selectedWeek (YYYY-Www) into a Monday date string YYYY-MM-DD
-        const weekParts = selectedWeek.split('-W');
-        let weekStartStr = null;
-        if (weekParts.length === 2) {
-          const y = parseInt(weekParts[0], 10);
-          const w = parseInt(weekParts[1], 10);
-          // ISO week to date: get Monday
-          const simple = new Date(Date.UTC(y, 0, 1 + (w - 1) * 7));
-          const dow = simple.getUTCDay();
-          const monday = new Date(simple);
-          const diff = (dow <= 4) ? (1 - dow) : (8 - dow);
-          monday.setUTCDate(simple.getUTCDate() + diff);
-          weekStartStr = monday.toISOString().split('T')[0];
-        }
-
-        // Prefer dedicated weekly-average endpoint if available
+        // Convert selectedDate (calendar date) into the Monday date string YYYY-MM-DD for the week
+        const sel = new Date(selectedDate);
+        const day = sel.getDay();
+        const diff = sel.getDate() - day + (day === 0 ? -6 : 1); // adjust to Monday
+        const monday = new Date(sel.setDate(diff));
+        const weekStartStr = monday.toISOString().split('T')[0];
         const response = await dataAPI.getWeeklyAverage(motorId, weekStartStr);
         const rows = Array.isArray(response.data)
           ? response.data
@@ -295,26 +271,18 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
     // Refresh weekly data every 5 minutes
     const interval = setInterval(fetchWeeklyData, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [motorId]);
+  }, [motorId, selectedDate]);
 
-  // Re-fetch weekly when user changes selected week
+  // Re-fetch weekly when user changes selected date
   useEffect(() => {
-    // trigger fetch by toggling motorId dependency via same effect above: simpler to call fetch here
     const fetchWeekly = async () => {
       try {
         setWeeklyError("");
-        const weekParts = selectedWeek.split('-W');
-        let weekStartStr = null;
-        if (weekParts.length === 2) {
-          const y = parseInt(weekParts[0], 10);
-          const w = parseInt(weekParts[1], 10);
-          const simple = new Date(Date.UTC(y, 0, 1 + (w - 1) * 7));
-          const dow = simple.getUTCDay();
-          const monday = new Date(simple);
-          const diff = (dow <= 4) ? (1 - dow) : (8 - dow);
-          monday.setUTCDate(simple.getUTCDate() + diff);
-          weekStartStr = monday.toISOString().split('T')[0];
-        }
+        const sel = new Date(selectedDate);
+        const day = sel.getDay();
+        const diff = sel.getDate() - day + (day === 0 ? -6 : 1);
+        const monday = new Date(sel.setDate(diff));
+        const weekStartStr = monday.toISOString().split('T')[0];
         const response = await dataAPI.getWeeklyAverage(motorId, weekStartStr);
         const rows = Array.isArray(response.data)
           ? response.data
@@ -358,7 +326,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
       }
     };
     fetchWeekly();
-  }, [selectedWeek, motorId]);
+  }, [selectedDate, motorId]);
 
   const weekStringToMondayDate = (weekStr) => {
     const parts = weekStr.split('-W');
@@ -641,15 +609,15 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
           <h2>Weekly Average</h2>
           <div className="controls">
               <label style={{ marginRight: 12 }}>
-                Pilih Minggu:
+                Pilih Minggu (klik tanggal untuk pilih minggu):
                 <input
-                  type="week"
-                  value={selectedWeek}
-                  onChange={(e) => setSelectedWeek(e.target.value)}
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
                   style={{ marginLeft: 8 }}
                 />
               </label>
-              <button className="btn-export" onClick={handleExportWeekly}>Export Weekly Excel</button>
+              <button className="btn-export" onClick={handleExportWeekly}>Export Excel</button>
           </div>
         </div>
 
@@ -689,7 +657,9 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                   formatter={(value) => [formatValueWithUnit(value, PARAMETER_CONFIGS.noise.unit), "Noise"]}
                   labelFormatter={formatTooltipLabel}
                 />
-                <Bar dataKey="value" fill={PARAMETER_CONFIGS.noise.color} />
+                <Bar dataKey="value" fill={PARAMETER_CONFIGS.noise.color}>
+                  <LabelList dataKey="value" position="top" formatter={(v) => `${((v/100)*PARAMETER_CONFIGS.noise.max).toFixed(1)} ${PARAMETER_CONFIGS.noise.unit}`} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -728,7 +698,9 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                   formatter={(value) => [formatValueWithUnit(value, PARAMETER_CONFIGS.temperature.unit), "Temperature"]}
                   labelFormatter={formatTooltipLabel}
                 />
-                <Bar dataKey="value" fill={PARAMETER_CONFIGS.temperature.color} />
+                <Bar dataKey="value" fill={PARAMETER_CONFIGS.temperature.color}>
+                  <LabelList dataKey="value" position="top" formatter={(v) => `${((v/100)*PARAMETER_CONFIGS.temperature.max).toFixed(1)} ${PARAMETER_CONFIGS.temperature.unit}`} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -767,7 +739,9 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                   formatter={(value) => [formatValueWithUnit(value, PARAMETER_CONFIGS.vibration.unit), "Vibration"]}
                   labelFormatter={formatTooltipLabel}
                 />
-                <Bar dataKey="value" fill={PARAMETER_CONFIGS.vibration.color} />
+                <Bar dataKey="value" fill={PARAMETER_CONFIGS.vibration.color}>
+                  <LabelList dataKey="value" position="top" formatter={(v) => `${((v/100)*PARAMETER_CONFIGS.vibration.max).toFixed(1)} ${PARAMETER_CONFIGS.vibration.unit}`} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -806,7 +780,9 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                   formatter={(value) => [formatValueWithUnit(value, PARAMETER_CONFIGS.power.unit), "Power"]}
                   labelFormatter={formatTooltipLabel}
                 />
-                <Bar dataKey="value" fill={PARAMETER_CONFIGS.power.color} />
+                <Bar dataKey="value" fill={PARAMETER_CONFIGS.power.color}>
+                  <LabelList dataKey="value" position="top" formatter={(v) => `${((v/100)*PARAMETER_CONFIGS.power.max).toFixed(1)} ${PARAMETER_CONFIGS.power.unit}`} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
