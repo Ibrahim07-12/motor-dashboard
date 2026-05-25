@@ -117,6 +117,70 @@ const generateHistoricalData = (hours = 24) => {
 
 const HISTORICAL_HOURS = Array.from({ length: 24 }, (_, hour) => `${String(hour).padStart(2, "0")}:00`);
 
+const formatISODateUTC = (date) => date.toISOString().split("T")[0];
+
+const getMondayFromDate = (selectedDate) => {
+  const date = new Date(`${selectedDate}T00:00:00Z`);
+  const offset = (date.getUTCDay() + 6) % 7;
+  date.setUTCDate(date.getUTCDate() - offset);
+  return formatISODateUTC(date);
+};
+
+const getWeekDatesMondayToFriday = (selectedDate) => {
+  const monday = new Date(`${getMondayFromDate(selectedDate)}T00:00:00Z`);
+  return Array.from({ length: 5 }, (_, index) => {
+    const date = new Date(monday);
+    date.setUTCDate(monday.getUTCDate() + index);
+    return formatISODateUTC(date);
+  });
+};
+
+const aggregateDailyHistoryRows = (rows = []) => {
+  const validRows = rows.filter((row) => row && typeof row === "object");
+  if (!validRows.length) {
+    return {
+      vibration: 0,
+      temperature: 0,
+      power: 0,
+      noise: 0,
+      samples: 0,
+    };
+  }
+
+  let vibrationSum = 0;
+  let temperatureSum = 0;
+  let powerSum = 0;
+  let noiseSum = 0;
+  let sampleWeight = 0;
+
+  validRows.forEach((row) => {
+    const weight = Number(row.readings || row.count || 1) || 1;
+    vibrationSum += Number(row.vibration || 0) * weight;
+    temperatureSum += Number(row.temperature || 0) * weight;
+    powerSum += Number(row.power || 0) * weight;
+    noiseSum += Number(row.noise || 0) * weight;
+    sampleWeight += weight;
+  });
+
+  if (!sampleWeight) {
+    return {
+      vibration: 0,
+      temperature: 0,
+      power: 0,
+      noise: 0,
+      samples: 0,
+    };
+  }
+
+  return {
+    vibration: vibrationSum / sampleWeight,
+    temperature: temperatureSum / sampleWeight,
+    power: powerSum / sampleWeight,
+    noise: noiseSum / sampleWeight,
+    samples: sampleWeight,
+  };
+};
+
 // Helper: Empty weekly data (real data only)
 const generateWeeklyData = () => {
   return {
@@ -246,71 +310,73 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
     const fetchWeekly = async () => {
       try {
         setWeeklyError("");
-        // derive Monday (start of week) from selectedDate
-        const sel = new Date(selectedDate);
-        // offset: number of days to go back to Monday (Mon=1 -> 0, Sun=0 -> 6)
-        const offset = (sel.getDay() + 6) % 7;
-        const monday = new Date(sel);
-        monday.setDate(sel.getDate() - offset);
-        const formatDate = (d) => d.toISOString().split("T")[0];
-        const weekDates = Array.from({ length: 5 }, (_, i) => {
-          const dt = new Date(monday);
-          dt.setDate(monday.getDate() + i);
-          return formatDate(dt);
-        });
+        const weekDates = getWeekDatesMondayToFriday(selectedDate);
+        const settledResponses = await Promise.allSettled(
+          weekDates.map((date) => dataAPI.getHistory(motorId, "daily", date))
+        );
 
-        const weekStartStr = formatDate(monday);
-        const response = await dataAPI.getWeeklyAverage(motorId, weekStartStr);
-        const rows = Array.isArray(response.data)
-          ? response.data
-          : Array.isArray(response.data?.data)
-            ? response.data.data
+        const dailyRows = weekDates.map((date, index) => {
+          const response = settledResponses[index];
+          const rows = response.status === "fulfilled"
+            ? Array.isArray(response.value.data)
+              ? response.value.data
+              : Array.isArray(response.value.data?.data)
+                ? response.value.data.data
+                : []
             : [];
+          const averaged = aggregateDailyHistoryRows(rows);
 
-        // map rows by date if available (best-effort), otherwise fall back to index
-        const rowByDate = new Map();
-        rows.forEach((r) => {
-          if (r.date) {
-            rowByDate.set((r.date || "").split("T")[0], r);
-          }
-        });
-
-        const paddedRows = weekDates.map((d, index) => {
-          const row = rowByDate.get(d) || rows[index] || {};
           return {
-            date: d,
+            date,
             name: weeklyLabels[index] || `day${index}`,
-            noise: row.noise || 0,
-            temperature: row.temperature || 0,
-            vibration: row.vibration || 0,
-            power: row.power || 0,
+            vibration: averaged.vibration,
+            temperature: averaged.temperature,
+            power: averaged.power,
+            noise: averaged.noise,
+            samples: averaged.samples,
           };
         });
 
-        if (rows.length > 0) {
-          const formattedData = {
-            noise: paddedRows.map((row) => ({ name: row.name, value: normalizeToPercentage(row.noise || 0, PARAMETER_CONFIGS.noise.max) })),
-            temperature: paddedRows.map((row) => ({ name: row.name, value: normalizeToPercentage(row.temperature || 0, PARAMETER_CONFIGS.temperature.max) })),
-            vibration: paddedRows.map((row) => ({ name: row.name, value: normalizeToPercentage(row.vibration || 0, PARAMETER_CONFIGS.vibration.max) })),
-            power: paddedRows.map((row) => ({ name: row.name, value: normalizeToPercentage((row.power || 0) / 1000, PARAMETER_CONFIGS.power.max) })),
-          };
-          setWeeklyData(formattedData);
-        } else {
-          setWeeklyData({
-            noise: paddedRows.map((r) => ({ name: r.name, value: 0 })),
-            temperature: paddedRows.map((r) => ({ name: r.name, value: 0 })),
-            vibration: paddedRows.map((r) => ({ name: r.name, value: 0 })),
-            power: paddedRows.map((r) => ({ name: r.name, value: 0 })),
-          });
+        const hasAnySamples = dailyRows.some((row) => Number(row.samples || 0) > 0);
+
+        const formattedData = {
+          noise: dailyRows.map((row) => ({
+            name: row.name,
+            date: row.date,
+            value: normalizeToPercentage(row.noise || 0, PARAMETER_CONFIGS.noise.max),
+            rawValue: row.noise || 0,
+          })),
+          temperature: dailyRows.map((row) => ({
+            name: row.name,
+            date: row.date,
+            value: normalizeToPercentage(row.temperature || 0, PARAMETER_CONFIGS.temperature.max),
+            rawValue: row.temperature || 0,
+          })),
+          vibration: dailyRows.map((row) => ({
+            name: row.name,
+            date: row.date,
+            value: normalizeToPercentage(row.vibration || 0, PARAMETER_CONFIGS.vibration.max),
+            rawValue: row.vibration || 0,
+          })),
+          power: dailyRows.map((row) => ({
+            name: row.name,
+            date: row.date,
+            value: normalizeToPercentage((row.power || 0) / 1000, PARAMETER_CONFIGS.power.max),
+            rawValue: row.power || 0,
+          })),
+        };
+
+        setWeeklyData(formattedData);
+        if (!hasAnySamples) {
           setWeeklyError("Tidak ada data weekly average pada periode ini.");
         }
       } catch (error) {
         console.error("Error fetching weekly data:", error.message);
         setWeeklyData({
-          noise: weeklyLabels.map((name) => ({ name, value: 0 })),
-          temperature: weeklyLabels.map((name) => ({ name, value: 0 })),
-          vibration: weeklyLabels.map((name) => ({ name, value: 0 })),
-          power: weeklyLabels.map((name) => ({ name, value: 0 })),
+          noise: weeklyLabels.map((name, index) => ({ name, date: getWeekDatesMondayToFriday(selectedDate)[index], value: 0, rawValue: 0 })),
+          temperature: weeklyLabels.map((name, index) => ({ name, date: getWeekDatesMondayToFriday(selectedDate)[index], value: 0, rawValue: 0 })),
+          vibration: weeklyLabels.map((name, index) => ({ name, date: getWeekDatesMondayToFriday(selectedDate)[index], value: 0, rawValue: 0 })),
+          power: weeklyLabels.map((name, index) => ({ name, date: getWeekDatesMondayToFriday(selectedDate)[index], value: 0, rawValue: 0 })),
         });
         const status = error?.response?.status;
         if (status === 401 || status === 403) {
@@ -323,37 +389,38 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
     fetchWeekly();
   }, [selectedDate, motorId]);
 
-  const weekStringToMondayDate = (weekStr) => {
-    const parts = weekStr.split('-W');
-    if (parts.length !== 2) return null;
-    const y = parseInt(parts[0], 10);
-    const w = parseInt(parts[1], 10);
-    const simple = new Date(Date.UTC(y, 0, 1 + (w - 1) * 7));
-    const dow = simple.getUTCDay();
-    const monday = new Date(simple);
-    const diff = (dow <= 4) ? (1 - dow) : (8 - dow);
-    monday.setUTCDate(simple.getUTCDate() + diff);
-    return monday.toISOString().split('T')[0];
-  };
-
   const handleExportWeekly = async () => {
     try {
-      // compute Monday from selectedDate
-      const sel = new Date(selectedDate);
-      const offset = (sel.getDay() + 6) % 7;
-      const monday = new Date(sel);
-      monday.setDate(sel.getDate() - offset);
-      const mondayStr = monday.toISOString().split("T")[0];
-      const resp = await dataAPI.exportData(motorId, 'weekly', mondayStr);
-      const blob = new Blob([resp.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `weekly-average-${mondayStr}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
+      const mondayStr = getMondayFromDate(selectedDate);
+      const weekDates = getWeekDatesMondayToFriday(selectedDate);
+      const exportRows = weekDates.map((date, index) => {
+        const noisePoint = weeklyData.noise?.[index] || {};
+        const temperaturePoint = weeklyData.temperature?.[index] || {};
+        const vibrationPoint = weeklyData.vibration?.[index] || {};
+        const powerPoint = weeklyData.power?.[index] || {};
+
+        return {
+          date,
+          day: formatTooltipLabel(weeklyLabels[index] || date),
+          vibration: Number(vibrationPoint.rawValue || 0).toFixed(2),
+          temperature: Number(temperaturePoint.rawValue || 0).toFixed(2),
+          power: Number(powerPoint.rawValue || 0).toFixed(2),
+          noise: Number(noisePoint.rawValue || 0).toFixed(2),
+        };
+      });
+
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(exportRows);
+      worksheet["!cols"] = [
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 14 },
+        { wch: 14 },
+        { wch: 12 },
+        { wch: 12 },
+      ];
+      XLSX.utils.book_append_sheet(workbook, worksheet, "WeeklyAverage");
+      XLSX.writeFile(workbook, `weekly-average-${mondayStr}-to-${weekDates[4]}.xlsx`);
     } catch (err) {
       console.error('Export weekly failed', err);
       const msg = err?.response?.data?.message || err?.message || 'Gagal export weekly.';
