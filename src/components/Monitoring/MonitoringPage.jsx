@@ -127,9 +127,9 @@ const MonitoringPage = ({ user = {}, onLogout = () => {} }) => {
   }, [motorId]);
 
   const handleSaveEmails = async (emails) => {
-    // Optionally save to backend in future
-    console.log("Saving emails:", emails);
-    // await settingsAPI.updateEmails(emails);
+    // Email saving is now handled by EmailSettings component
+    // This callback is kept for potential future custom logic
+    console.log("Emails updated in backend:", emails);
   };
 
   return (

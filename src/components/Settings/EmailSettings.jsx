@@ -4,20 +4,60 @@ import "./EmailSettings.css";
 /**
  * EmailSettings Modal
  * - Add/Remove email recipients for alerts
- * - Enable/Disable email notifications
- * Clean and simple form
+ * - Fetch from backend on open
+ * - Save to backend
  */
 const EmailSettings = ({
   isOpen,
   onClose,
   currentEmails = [],
   onSave,
-  isLoading = false,
+  isLoading: externalLoading = false,
 }) => {
   const [emails, setEmails] = useState(currentEmails);
   const [newEmail, setNewEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Load emails from backend when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchEmails();
+    }
+  }, [isOpen]);
+
+  const fetchEmails = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("Authentication token not found");
+        return;
+      }
+
+      const response = await fetch(
+        "https://backend-motor-foundry.vercel.app/api/auth/notification-emails",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch emails");
+      }
+
+      const data = await response.json();
+      setEmails(data.emails || []);
+      setError("");
+    } catch (err) {
+      console.error("Error fetching emails:", err);
+      setError("Failed to load email settings");
+    }
+  };
 
   // Validation regex for email
   const isValidEmail = (email) => {
@@ -46,8 +86,35 @@ const EmailSettings = ({
     setNewEmail("");
   };
 
-  const handleRemoveEmail = (emailToRemove) => {
-    setEmails(emails.filter((email) => email !== emailToRemove));
+  const handleRemoveEmail = async (emailToRemove) => {
+    try {
+      setIsLoading(true);
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(
+        `https://backend-motor-foundry.vercel.app/api/auth/notification-emails/${encodeURIComponent(emailToRemove)}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to remove email");
+      }
+
+      const data = await response.json();
+      setEmails(data.emails || []);
+      setSuccess("Email removed successfully");
+    } catch (err) {
+      console.error("Error removing email:", err);
+      setError("Failed to remove email");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSave = async () => {
@@ -60,13 +127,46 @@ const EmailSettings = ({
     }
 
     try {
-      await onSave(emails);
+      setIsLoading(true);
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("Authentication token not found");
+      }
+
+      const response = await fetch(
+        "https://backend-motor-foundry.vercel.app/api/auth/notification-emails",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ emails }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to save emails");
+      }
+
+      const data = await response.json();
+      setEmails(data.emails || []);
       setSuccess("Email settings saved successfully!");
+
+      if (onSave) {
+        await onSave(emails);
+      }
+
       setTimeout(() => {
         onClose();
       }, 1500);
     } catch (err) {
+      console.error("Error saving emails:", err);
       setError(err.message || "Failed to save email settings");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -87,7 +187,7 @@ const EmailSettings = ({
         {/* Header */}
         <div className="modal-header">
           <h2>📧 Email Settings</h2>
-          <button className="close-btn" onClick={onClose}>
+          <button className="close-btn" onClick={onClose} disabled={isLoading}>
             ✕
           </button>
         </div>
@@ -107,13 +207,13 @@ const EmailSettings = ({
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
               onKeyPress={handleKeyPress}
-              disabled={isLoading}
+              disabled={isLoading || externalLoading}
               className="email-input"
             />
             <button
               className="btn-add"
               onClick={handleAddEmail}
-              disabled={isLoading}
+              disabled={isLoading || externalLoading}
             >
               Add
             </button>
@@ -132,7 +232,7 @@ const EmailSettings = ({
                     <button
                       className="btn-remove"
                       onClick={() => handleRemoveEmail(email)}
-                      disabled={isLoading}
+                      disabled={isLoading || externalLoading}
                       title="Remove"
                     >
                       ✕
@@ -150,13 +250,17 @@ const EmailSettings = ({
 
         {/* Footer */}
         <div className="modal-footer">
-          <button className="btn-cancel" onClick={onClose} disabled={isLoading}>
+          <button
+            className="btn-cancel"
+            onClick={onClose}
+            disabled={isLoading || externalLoading}
+          >
             Cancel
           </button>
           <button
             className="btn-save"
             onClick={handleSave}
-            disabled={isLoading || emails.length === 0}
+            disabled={isLoading || externalLoading || emails.length === 0}
           >
             {isLoading ? "Saving..." : "Save Emails"}
           </button>
