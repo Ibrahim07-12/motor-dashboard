@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import api from "../../services/api";
 import "./EmailSettings.css";
 
 /**
@@ -35,22 +36,13 @@ const EmailSettings = ({
         return;
       }
 
-      const response = await fetch(
-        "https://backend-motor-foundry.vercel.app/api/auth/notification-emails",
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await api.get("/auth/notification-emails", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch emails");
-      }
-
-      const data = await response.json();
+      const data = response.data;
       setEmails(data.emails || []);
       setError("");
     } catch (err) {
@@ -91,22 +83,16 @@ const EmailSettings = ({
       setIsLoading(true);
       const token = localStorage.getItem("token");
 
-      const response = await fetch(
-        `https://backend-motor-foundry.vercel.app/api/auth/notification-emails/${encodeURIComponent(emailToRemove)}`,
+      const response = await api.delete(
+        `/auth/notification-emails/${encodeURIComponent(emailToRemove)}`,
         {
-          method: "DELETE",
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
           },
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to remove email");
-      }
-
-      const data = await response.json();
+      const data = response.data;
       setEmails(data.emails || []);
       setSuccess("Email removed successfully");
     } catch (err) {
@@ -134,24 +120,17 @@ const EmailSettings = ({
         throw new Error("Authentication token not found");
       }
 
-      const response = await fetch(
-        "https://backend-motor-foundry.vercel.app/api/auth/notification-emails",
+      const response = await api.post(
+        "/auth/notification-emails",
+        { emails },
         {
-          method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
           },
-          body: JSON.stringify({ emails }),
         }
       );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to save emails");
-      }
-
-      const data = await response.json();
+      const data = response.data;
       setEmails(data.emails || []);
       setSuccess("Email settings saved successfully!");
 
