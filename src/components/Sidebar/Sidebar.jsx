@@ -4,7 +4,7 @@ import "./Sidebar.css";
 /**
  * Sidebar Component
  * - Notification toggle
- * - Settings buttons (Threshold, Email)
+ * - Settings buttons (UI Threshold, Email)
  * - Logout button
  */
 const Sidebar = ({
@@ -55,7 +55,7 @@ const Sidebar = ({
             className="settings-btn threshold-btn"
             onClick={onOpenThresholdSettings}
           >
-            Thresholds
+            UI Thresholds
           </button>
           <button
             className="settings-btn email-btn"

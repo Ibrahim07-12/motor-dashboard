@@ -64,6 +64,11 @@ export const dataAPI = {
       `/data/export?motorId=${motorId}&mode=${mode}&date=${date}&format=xlsx`,
       { responseType: "blob" },
     ),
+  exportRawByDateRange: (motorId, startDate, endDate, format = "xlsx") =>
+    api.get(
+      `/data/export?motorId=${motorId}&startDate=${startDate}&endDate=${endDate}&format=${format}`,
+      { responseType: "blob" },
+    ),
 };
 
 export default api;

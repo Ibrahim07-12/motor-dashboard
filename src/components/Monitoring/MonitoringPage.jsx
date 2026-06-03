@@ -28,7 +28,7 @@ const MonitoringPage = ({ user = {}, onLogout = () => {} }) => {
   const [notificationEnabled, setNotificationEnabled] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  // Thresholds for warning notifications
+  // UI thresholds for gauge color + local warning notifications
   const [thresholds, setThresholds] = useState(() => {
     // Load from localStorage if available, otherwise use defaults
     const saved = localStorage.getItem("motorThresholds");
@@ -39,7 +39,7 @@ const MonitoringPage = ({ user = {}, onLogout = () => {} }) => {
         console.error("Failed to parse saved thresholds:", e);
       }
     }
-    // Default thresholds
+    // Default UI thresholds
     return {
       temperature: 70, // °C
       vibration: 25, // m/s²

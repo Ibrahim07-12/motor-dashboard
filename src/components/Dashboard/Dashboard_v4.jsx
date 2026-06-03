@@ -191,6 +191,8 @@ const generateWeeklyData = () => {
   };
 };
 
+const POWER_PHASE_MAX_W = 23000;
+
 
 
 const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", thresholds = {} }) => {
@@ -218,6 +220,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   const [averageMonth, setAverageMonth] = useState(new Date().toISOString().slice(0, 7));
   // Week selector as a calendar date (user picks any date within desired week)
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [historicalExportInterval, setHistoricalExportInterval] = useState("1h");
 
   // Update gauge values from real sensorData prop
   useEffect(() => {
@@ -431,11 +434,11 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   const powerPhases = sensorData.powerPhases || { R: 0, S: 0, T: 0 };
 
   const renderMiniPhaseGauge = (phaseKey, value, phaseThresholdW, isUnbalanced = false) => {
-    const displayValue = value / 1000.0;
-    const thresholdKw = phaseThresholdW / 1000.0;
-    const percentage = Math.min((displayValue / PARAMETER_CONFIGS.power.max) * 100, 100);
+    const displayValueW = Number(value || 0);
+    const thresholdW = Number(phaseThresholdW || 0);
+    const percentage = Math.min((displayValueW / POWER_PHASE_MAX_W) * 100, 100);
     const dashOffset = 100 - percentage;
-    let gaugeColor = displayValue <= thresholdKw ? "#22c55e" : "#ef4444";
+    let gaugeColor = displayValueW <= thresholdW ? "#22c55e" : "#ef4444";
     if (isUnbalanced) gaugeColor = "#ef4444";
 
     return (
@@ -462,10 +465,10 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
           />
           <circle cx="50" cy="52" r="2.5" fill={gaugeColor} />
           <text x="12" y="67" textAnchor="start" className="mini-phase-min-label">0</text>
-          <text x="88" y="67" textAnchor="end" className="mini-phase-max-label">{PARAMETER_CONFIGS.power.max}</text>
+          <text x="88" y="67" textAnchor="end" className="mini-phase-max-label">{POWER_PHASE_MAX_W}</text>
         </svg>
         <div className="mini-phase-value">
-          {displayValue.toFixed(1)} <span>kW</span>
+          {displayValueW.toFixed(0)} <span>W</span>
         </div>
       </div>
     );
@@ -548,12 +551,38 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   };
 
   const handleExportCsv = () => {
+    if (historicalExportInterval === "5s") {
+      dataAPI
+        .exportRawByDateRange(motorId, historicalDate, historicalDate, "xlsx")
+        .then((response) => {
+          const blob = new Blob([
+            response.data,
+          ], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          });
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `grafik-historis-5detik-${historicalDate}.xlsx`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        })
+        .catch((err) => {
+          console.error("Export 5 detik gagal:", err);
+          const msg = err?.response?.data?.error || err?.message || "Gagal export 5 detik.";
+          alert(msg);
+        });
+      return;
+    }
+
     if (!historicalData || historicalData.length === 0) {
       alert("Data tidak tersedia untuk di-export. Pilih tanggal dengan data yang ada.");
       return;
     }
-    
-    const rows = historicalData.map(row => ({
+
+    const rows = historicalData.map((row) => ({
       Date: historicalDate,
       Time: row.time || "00:00",
       Vibration_ms2: ((Number(row.vibration) / 100) * PARAMETER_CONFIGS.vibration.max).toFixed(2),
@@ -561,23 +590,23 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
       Power_kW: ((Number(row.power) / 100) * PARAMETER_CONFIGS.power.max).toFixed(2),
       Noise_dB: ((Number(row.noise) / 100) * PARAMETER_CONFIGS.noise.max).toFixed(2),
     }));
-    
+
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(rows);
-    
+
     // Auto-size columns
     const colWidths = [
-      { wch: 12 }, // Date
-      { wch: 10 }, // Time
-      { wch: 16 }, // Vibration
-      { wch: 16 }, // Temperature
-      { wch: 12 }, // Power
-      { wch: 12 }, // Noise
+      { wch: 12 },
+      { wch: 10 },
+      { wch: 16 },
+      { wch: 16 },
+      { wch: 12 },
+      { wch: 12 },
     ];
     worksheet["!cols"] = colWidths;
-    
+
     XLSX.utils.book_append_sheet(workbook, worksheet, "Historis");
-    XLSX.writeFile(workbook, `grafik-historis-${historicalDate}.xlsx`);
+    XLSX.writeFile(workbook, `grafik-historis-1jam-${historicalDate}.xlsx`);
   };
 
   return (
@@ -612,6 +641,15 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
                 onChange={(e) => setHistoricalDate(e.target.value)}
               />
             </label>
+            <select
+              value={historicalExportInterval}
+              onChange={(e) => setHistoricalExportInterval(e.target.value)}
+              aria-label="Interval export historis"
+              title="Pilih interval export"
+            >
+              <option value="1h">Export 1 Jam</option>
+              <option value="5s">Export 5 Detik</option>
+            </select>
             <button className="btn-export" onClick={handleExportCsv}>Export Excel</button>
           </div>
         </div>

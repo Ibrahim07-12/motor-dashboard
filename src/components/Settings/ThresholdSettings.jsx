@@ -3,8 +3,8 @@ import "./ThresholdSettings.css";
 
 /**
  * ThresholdSettings Modal
- * - Edit min/max thresholds for each sensor
- * - Save to backend
+ * - Edit min/max thresholds for each sensor (UI)
+ * - Save thresholds for gauge color + local warning notifications
  * Clean and simple form
  */
 const ThresholdSettings = ({
@@ -90,7 +90,7 @@ const ThresholdSettings = ({
       };
 
       await onSave(simple);
-      setSuccess("Thresholds saved successfully!");
+      setSuccess("UI thresholds saved successfully!");
       setTimeout(() => {
         onClose();
       }, 1500);
@@ -109,11 +109,16 @@ const ThresholdSettings = ({
       >
         {/* Header */}
         <div className="modal-header">
-          <h2>📊 Threshold Settings</h2>
+          <h2>📊 UI Alert Thresholds</h2>
           <button className="close-btn" onClick={onClose}>
             ✕
           </button>
         </div>
+
+        <p className="description">
+          Dipakai untuk warna gauge dan notifikasi abnormal parameter di dashboard.
+          Tidak mengubah threshold model anomaly detection di Edge Gateway.
+        </p>
 
         {/* Body */}
         <div className="modal-body">
