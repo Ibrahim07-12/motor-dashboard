@@ -37,6 +37,7 @@ const Notification = ({
     }
 
     const abnormalParams = [];
+    const powerPhaseAlerts = [];
 
     // Check Temperature
     if (sensorData.temperature && sensorData.temperature > thresholds.temperature) {
@@ -57,20 +58,21 @@ const Notification = ({
     const powerThreshold = thresholds.power;
     const phasesSrc = sensorData.phase || sensorData.powerPhases || {};
     if (typeof powerThreshold === "object") {
-      if (phasesSrc.R && phasesSrc.R.power && phasesSrc.R.power > (powerThreshold.R || 0)) {
-        abnormalParams.push("Daya R");
-      } else if (sensorData.powerPhases && sensorData.powerPhases.R && sensorData.powerPhases.R > (powerThreshold.R || 0)) {
-        abnormalParams.push("Daya R");
+      const phaseValue = (phaseKey) => {
+        if (phasesSrc?.[phaseKey] && typeof phasesSrc[phaseKey] === "object") {
+          return Number(phasesSrc[phaseKey].power || 0);
+        }
+        return Number(sensorData?.powerPhases?.[phaseKey] || phasesSrc?.[phaseKey] || 0);
+      };
+
+      if (phaseValue("R") > Number(powerThreshold.R || 0)) {
+        powerPhaseAlerts.push("R");
       }
-      if (phasesSrc.S && phasesSrc.S.power && phasesSrc.S.power > (powerThreshold.S || 0)) {
-        abnormalParams.push("Daya S");
-      } else if (sensorData.powerPhases && sensorData.powerPhases.S && sensorData.powerPhases.S > (powerThreshold.S || 0)) {
-        abnormalParams.push("Daya S");
+      if (phaseValue("S") > Number(powerThreshold.S || 0)) {
+        powerPhaseAlerts.push("S");
       }
-      if (phasesSrc.T && phasesSrc.T.power && phasesSrc.T.power > (powerThreshold.T || 0)) {
-        abnormalParams.push("Daya T");
-      } else if (sensorData.powerPhases && sensorData.powerPhases.T && sensorData.powerPhases.T > (powerThreshold.T || 0)) {
-        abnormalParams.push("Daya T");
+      if (phaseValue("T") > Number(powerThreshold.T || 0)) {
+        powerPhaseAlerts.push("T");
       }
       // also check total if provided
       if (sensorData.power && powerThreshold.total && sensorData.power > powerThreshold.total) {
@@ -99,6 +101,18 @@ const Notification = ({
       }
 
       alertsToSet.push({ id: `alert-${Date.now()}`, message, type: "warning", timestamp: new Date() });
+    }
+
+    if (powerPhaseAlerts.length > 0) {
+      const motorDisplay = getMotorDisplayName(motorId);
+      powerPhaseAlerts.forEach((phase) => {
+        alertsToSet.push({
+          id: `power-${phase}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          message: `Daya ${phase} Motor ${motorDisplay} melebihi batas aman.`,
+          type: "warning",
+          timestamp: new Date(),
+        });
+      });
     }
 
     // Generate separate alerts for imbalance (one per unbalanced phase)

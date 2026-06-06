@@ -1,6 +1,33 @@
 import React, { useState, useEffect } from "react";
 import "./ThresholdSettings.css";
 
+const toFormState = (currentThresholds = {}) => ({
+  vibration: {
+    min: 0,
+    max:
+      typeof currentThresholds.vibration === "number"
+        ? currentThresholds.vibration
+        : 100,
+  },
+  temperature: {
+    min: 0,
+    max:
+      typeof currentThresholds.temperature === "number"
+        ? currentThresholds.temperature
+        : 150,
+  },
+  power: {
+    R: { min: 0, max: currentThresholds?.power?.R ?? 23000 },
+    S: { min: 0, max: currentThresholds?.power?.S ?? 23000 },
+    T: { min: 0, max: currentThresholds?.power?.T ?? 23000 },
+  },
+  noise: {
+    min: 0,
+    max:
+      typeof currentThresholds.noise === "number" ? currentThresholds.noise : 160,
+  },
+});
+
 /**
  * ThresholdSettings Modal
  * - Edit min/max thresholds for each sensor (UI)
@@ -14,20 +41,18 @@ const ThresholdSettings = ({
   onSave,
   isLoading = false,
 }) => {
-  const [thresholds, setThresholds] = useState({
-    vibration: { min: 0, max: 150 },
-    temperature: { min: 0, max: 150 },
-    power: {
-      R: { min: 0, max: 23000 },
-      S: { min: 0, max: 23000 },
-      T: { min: 0, max: 23000 },
-    },
-    noise: { min: 0, max: 130 },
-    ...currentThresholds,
-  });
+  const [thresholds, setThresholds] = useState(toFormState(currentThresholds));
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    if (isOpen) {
+      setThresholds(toFormState(currentThresholds));
+      setError("");
+      setSuccess("");
+    }
+  }, [isOpen, currentThresholds]);
 
   const handleThresholdChange = (sensor, field, value) => {
     const numValue = parseFloat(value) || 0;
@@ -109,16 +134,11 @@ const ThresholdSettings = ({
       >
         {/* Header */}
         <div className="modal-header">
-          <h2>📊 UI Alert Thresholds</h2>
+          <h2>📊 Thresholds</h2>
           <button className="close-btn" onClick={onClose}>
             ✕
           </button>
         </div>
-
-        <p className="description">
-          Dipakai untuk warna gauge dan notifikasi abnormal parameter di dashboard.
-          Tidak mengubah threshold model anomaly detection di Edge Gateway.
-        </p>
 
         {/* Body */}
         <div className="modal-body">
@@ -131,6 +151,7 @@ const ThresholdSettings = ({
                 <input
                   type="number"
                   min="0"
+                  max="100"
                   value={thresholds.vibration.min}
                   onChange={(e) =>
                     handleThresholdChange("vibration", "min", e.target.value)
@@ -143,6 +164,7 @@ const ThresholdSettings = ({
                 <input
                   type="number"
                   min="0"
+                  max="100"
                   value={thresholds.vibration.max}
                   onChange={(e) =>
                     handleThresholdChange("vibration", "max", e.target.value)
@@ -161,6 +183,8 @@ const ThresholdSettings = ({
                 <span>Min:</span>
                 <input
                   type="number"
+                  min="0"
+                  max="150"
                   value={thresholds.temperature.min}
                   onChange={(e) =>
                     handleThresholdChange("temperature", "min", e.target.value)
@@ -172,6 +196,8 @@ const ThresholdSettings = ({
                 <span>Max:</span>
                 <input
                   type="number"
+                  min="0"
+                  max="150"
                   value={thresholds.temperature.max}
                   onChange={(e) =>
                     handleThresholdChange("temperature", "max", e.target.value)
@@ -191,6 +217,7 @@ const ThresholdSettings = ({
                 <input
                   type="number"
                   min="0"
+                  max="23000"
                   value={thresholds.power.R.min}
                   onChange={(e) =>
                     handleThresholdChange("power.R", "min", e.target.value)
@@ -203,6 +230,7 @@ const ThresholdSettings = ({
                 <input
                   type="number"
                   min="0"
+                  max="23000"
                   value={thresholds.power.R.max}
                   onChange={(e) =>
                     handleThresholdChange("power.R", "max", e.target.value)
@@ -216,6 +244,7 @@ const ThresholdSettings = ({
                 <input
                   type="number"
                   min="0"
+                  max="23000"
                   value={thresholds.power.S.min}
                   onChange={(e) =>
                     handleThresholdChange("power.S", "min", e.target.value)
@@ -228,6 +257,7 @@ const ThresholdSettings = ({
                 <input
                   type="number"
                   min="0"
+                  max="23000"
                   value={thresholds.power.S.max}
                   onChange={(e) =>
                     handleThresholdChange("power.S", "max", e.target.value)
@@ -241,6 +271,7 @@ const ThresholdSettings = ({
                 <input
                   type="number"
                   min="0"
+                  max="23000"
                   value={thresholds.power.T.min}
                   onChange={(e) =>
                     handleThresholdChange("power.T", "min", e.target.value)
@@ -253,6 +284,7 @@ const ThresholdSettings = ({
                 <input
                   type="number"
                   min="0"
+                  max="23000"
                   value={thresholds.power.T.max}
                   onChange={(e) =>
                     handleThresholdChange("power.T", "max", e.target.value)
@@ -274,6 +306,7 @@ const ThresholdSettings = ({
                 <input
                   type="number"
                   min="0"
+                  max="160"
                   value={thresholds.noise.min}
                   onChange={(e) =>
                     handleThresholdChange("noise", "min", e.target.value)
@@ -286,6 +319,7 @@ const ThresholdSettings = ({
                 <input
                   type="number"
                   min="0"
+                  max="160"
                   value={thresholds.noise.max}
                   onChange={(e) =>
                     handleThresholdChange("noise", "max", e.target.value)

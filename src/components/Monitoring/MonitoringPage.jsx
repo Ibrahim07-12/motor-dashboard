@@ -28,10 +28,12 @@ const MonitoringPage = ({ user = {}, onLogout = () => {} }) => {
   const [notificationEnabled, setNotificationEnabled] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  const thresholdStorageKey = `motorThresholds:${user?.id || user?.email || "default"}`;
+
   // UI thresholds for gauge color + local warning notifications
   const [thresholds, setThresholds] = useState(() => {
-    // Load from localStorage if available, otherwise use defaults
-    const saved = localStorage.getItem("motorThresholds");
+    // Load from per-user localStorage key first, fallback to legacy key
+    const saved = localStorage.getItem(thresholdStorageKey) || localStorage.getItem("motorThresholds");
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -86,12 +88,22 @@ const MonitoringPage = ({ user = {}, onLogout = () => {} }) => {
     setThresholds(newThresholds);
     // Persist to localStorage
     try {
+      localStorage.setItem(thresholdStorageKey, JSON.stringify(newThresholds));
       localStorage.setItem("motorThresholds", JSON.stringify(newThresholds));
       console.log("✓ Thresholds saved to localStorage:", newThresholds);
     } catch (e) {
       console.error("Failed to save thresholds to localStorage:", e);
     }
   };
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(thresholdStorageKey, JSON.stringify(thresholds));
+      localStorage.setItem("motorThresholds", JSON.stringify(thresholds));
+    } catch (e) {
+      console.error("Failed to persist thresholds:", e);
+    }
+  }, [thresholds, thresholdStorageKey]);
 
   // Real-time polling every 2 seconds
   useEffect(() => {
@@ -164,6 +176,7 @@ const MonitoringPage = ({ user = {}, onLogout = () => {} }) => {
       <ThresholdSettings
         isOpen={showThresholdModal}
         onClose={() => setShowThresholdModal(false)}
+        currentThresholds={thresholds}
         onSave={handleSaveThresholds}
       />
 
