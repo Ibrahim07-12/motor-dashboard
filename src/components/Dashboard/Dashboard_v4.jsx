@@ -489,7 +489,7 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
 
     return (
       <div className="gauge-container power-phase-card">
-        <div className="gauge-label">Power Phase (R / S / T) - Set Threshold: {phaseThresholdR}W</div>
+        <div className="gauge-label">Power Phase (R / S / T)</div>
         <div className="mini-phase-row">
           {renderMiniPhaseGauge("R", powerPhases.R || 0, phaseThresholdR, sensorData.imbalancePhases?.R?.unbalanced)}
           {renderMiniPhaseGauge("S", powerPhases.S || 0, phaseThresholdS, sensorData.imbalancePhases?.S?.unbalanced)}

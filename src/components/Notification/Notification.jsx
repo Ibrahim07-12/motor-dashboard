@@ -122,9 +122,13 @@ const Notification = ({
       const motorDisplay = getMotorDisplayName(motorId);
       const unbalancedPhases = [];
       
-      // Collect phases yang unbalanced (skip metadata keys like 'any' dan 'max')
+      // Collect phases yang unbalanced (skip metadata keys + exclude 0W motor mati)
       Object.keys(imbalance).forEach((k) => {
         if (k === 'any' || k === 'max') return;
+        // Exclude 0W (motor mati) dari unbalance notification
+        const phaseKey = `powerPhases.${k}` in imbalance ? k.toLowerCase() : k;
+        const powerValue = sensorData.powerPhases?.[phaseKey] || 0;
+        if (powerValue < 100) return;  // Motor mati (0W) = normal, jangan notify
         if (imbalance[k] && imbalance[k].unbalanced) {
           unbalancedPhases.push(k);
         }
