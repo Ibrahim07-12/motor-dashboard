@@ -435,11 +435,14 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
 
   const renderMiniPhaseGauge = (phaseKey, value, phaseThresholdW, isUnbalanced = false) => {
     const displayValueW = Number(value || 0);
-    const thresholdW = Number(phaseThresholdW || 0);
+    const thresholdW = Number(phaseThresholdW || 8000); // Default 8000W if not set
     const percentage = Math.min((displayValueW / POWER_PHASE_MAX_W) * 100, 100);
     const dashOffset = 100 - percentage;
-    let gaugeColor = displayValueW <= thresholdW ? "#22c55e" : "#ef4444";
-    if (isUnbalanced) gaugeColor = "#ef4444";
+    
+    // FIX: Gauge only RED jika value EXCEED threshold
+    // Unbalance hanya affect color jika ada actual threshold exceed
+    const exceedThreshold = displayValueW > thresholdW;
+    let gaugeColor = exceedThreshold ? "#ef4444" : "#22c55e";
 
     return (
       <div className="mini-phase-gauge">
@@ -475,13 +478,18 @@ const Dashboard = ({ sensorData = {}, motorId = "motor_main_shakeout", threshold
   };
 
   const renderPhaseCard = () => {
-    const phaseThresholdR = thresholds.power && thresholds.power.R ? thresholds.power.R : 8000;
-    const phaseThresholdS = thresholds.power && thresholds.power.S ? thresholds.power.S : 8000;
-    const phaseThresholdT = thresholds.power && thresholds.power.T ? thresholds.power.T : 8000;
+    // FIX: Read thresholds correctly from state with proper Number conversion
+    const phaseThresholdR = Number(thresholds?.power?.R) || 8000;
+    const phaseThresholdS = Number(thresholds?.power?.S) || 8000;
+    const phaseThresholdT = Number(thresholds?.power?.T) || 8000;
+
+    // DEBUG: Log to verify thresholds loaded correctly
+    console.log('[Dashboard Gauge] Power Thresholds:', { R: phaseThresholdR, S: phaseThresholdS, T: phaseThresholdT });
+    console.log('[Dashboard Gauge] Power Values:', { R: powerPhases.R, S: powerPhases.S, T: powerPhases.T });
 
     return (
       <div className="gauge-container power-phase-card">
-        <div className="gauge-label">Power Phase (R / S / T)</div>
+        <div className="gauge-label">Power Phase (R / S / T) - Set Threshold: {phaseThresholdR}W</div>
         <div className="mini-phase-row">
           {renderMiniPhaseGauge("R", powerPhases.R || 0, phaseThresholdR, sensorData.imbalancePhases?.R?.unbalanced)}
           {renderMiniPhaseGauge("S", powerPhases.S || 0, phaseThresholdS, sensorData.imbalancePhases?.S?.unbalanced)}

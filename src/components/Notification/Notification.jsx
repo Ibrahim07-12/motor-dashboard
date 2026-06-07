@@ -115,21 +115,46 @@ const Notification = ({
       });
     }
 
-    // Generate separate alerts for imbalance (one per unbalanced phase)
+    // FIX: Generate SINGLE combined alert for imbalance (instead of 3 separate ones)
+    // Dynamically create message based on which phases are unbalanced
     const imbalance = sensorData.imbalancePhases;
     if (imbalance && imbalance.any) {
       const motorDisplay = getMotorDisplayName(motorId);
+      const unbalancedPhases = [];
+      
+      // Collect phases yang unbalanced (skip metadata keys like 'any' dan 'max')
       Object.keys(imbalance).forEach((k) => {
         if (k === 'any' || k === 'max') return;
         if (imbalance[k] && imbalance[k].unbalanced) {
+          unbalancedPhases.push(k);
+        }
+      });
+      
+      // Generate SINGLE message berdasarkan kombinasi phases yang unbalanced
+      if (unbalancedPhases.length > 0) {
+        let imbalanceMessage = "";
+        
+        if (unbalancedPhases.length === 1) {
+          // Single phase: "Phase R power Unbalance on Motor Mainshakeout"
+          imbalanceMessage = `Phase ${unbalancedPhases[0]} power Unbalance on Motor ${motorDisplay}`;
+        } else if (unbalancedPhases.length === 2) {
+          // Two phases: "Phase R and S power Unbalance on Motor Mainshakeout"
+          imbalanceMessage = `Phase ${unbalancedPhases[0]} and ${unbalancedPhases[1]} power Unbalance on Motor ${motorDisplay}`;
+        } else if (unbalancedPhases.length === 3) {
+          // Three phases: "Phase R, S, and T power Unbalance on Motor Mainshakeout"
+          imbalanceMessage = `Phase ${unbalancedPhases[0]}, ${unbalancedPhases[1]}, and ${unbalancedPhases[2]} power Unbalance on Motor ${motorDisplay}`;
+        }
+        
+        // Push SINGLE combined alert (not 3 separate ones)
+        if (imbalanceMessage) {
           alertsToSet.push({
-            id: `imbalance-${k}-${Date.now()}`,
-            message: `Phase ${k} Power Unbalance on Motor ${motorDisplay}`,
+            id: `imbalance-combined-${Date.now()}`,
+            message: imbalanceMessage,
             type: "warning",
             timestamp: new Date(),
           });
         }
-      });
+      }
     }
 
     setAlerts(alertsToSet);
